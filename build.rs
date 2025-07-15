@@ -1,7 +1,7 @@
 fn main() {
     cxx_build::bridge("src/main.rs")  // returns a cc::Build
         .file("src/example.cc")
-        .std("c++20")
+        .std("c++17")
         .compile("cxxbridge-test");
 
     println!("cargo:rerun-if-changed=src/main.rs");
