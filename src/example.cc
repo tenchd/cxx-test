@@ -26,6 +26,14 @@ rust::Vec<Shared> f(rust::Vec<Shared> v) {
   for (auto i: stdv) {
     std::cout << i.v << std::endl;
   }
+
+  std::vector<int> stdv_value;
+  for (auto i: stdv) {
+    stdv_value.push_back(i.v);
+  }
+
+  writeVectorToFile2(stdv_value, "output.txt");
+
   // write back into rust::Vec and return
   rust::Vec<Shared> output;
   for (auto i: stdv) {
