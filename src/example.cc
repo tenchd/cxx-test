@@ -31,5 +31,8 @@ rust::Vec<Shared> f(rust::Vec<Shared> v) {
   for (auto i: stdv) {
     output.push_back(i);
   }
+
+  //stupid();
+
   return output;
 }
