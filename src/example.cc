@@ -32,7 +32,7 @@ rust::Vec<Shared> f(rust::Vec<Shared> v) {
     output.push_back(i);
   }
 
-  //stupid();
+  //stupidconnorlala();
 
   return output;
 }

@@ -8,12 +8,6 @@
 // #include <parmetis.h>
 
 
-/*
-void stupidconnorlalala() {
-    std::cout << "you are not stupid" << std::endl;
-}
-*/
-
 
 template <typename type_int, typename type_data>
 struct triplet_matrix {

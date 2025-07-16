@@ -7,7 +7,9 @@ mod ffi {
 
     unsafe extern "C++" {
         include!("cxx-test/include/example.h");
-        include!("cxx-test/include/pre_process.hpp");
+//        include!("cxx-test/include/pre_process.hpp");
+//        include!("cxx-test/include/auxilliary.hpp");
+//        include!("cxx-test/include/custom_cg.hpp");
 
         fn f(elements: Vec<Shared>) -> Vec<Shared>;
     }
