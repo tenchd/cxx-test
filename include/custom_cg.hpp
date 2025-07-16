@@ -13,6 +13,8 @@ void writeVectorToFile2(const std::vector<type_int>& vec, const std::string& fil
 {
     std::ofstream outFile(filename);
     
+    //std::cout << "opening file: " << filename << std::endl;
+
     if (!outFile) {
         std::cerr << "Error opening file: " << filename << std::endl;
         return;
