@@ -104,6 +104,7 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
             type_int thread_id, type_int total_threads, int64_t *test_vec, int *schedule_id) 
 {
 
+    printf("got into perform_factorization_device \n");
     // // set thread schedule affinity
     // cpu_set_t cpuset;
     // CPU_ZERO(&cpuset);
@@ -149,13 +150,17 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
         }
     }
 
+    printf("progress flag line 153 \n");
 
 
     // skip num_cols - 1 since the last column is empty
     //int static_id = 0;
+
+    printf("num_cols = %d \n",num_cols);
+
     while(queue_access_index < num_cols)
     {
-        
+        //printf("queue_access_index = %d \n", queue_access_index);
         
         if(job_id == -1)
         {
@@ -205,7 +210,7 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
       //  static_id++;
         //curand_init(0, job_id, 0, &state);
      
-        
+    //printf("progress flag line 210 \n");
 
         // job successfully queued up, move to next search location
         queue_access_index += gap;
@@ -238,7 +243,7 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
          
         //cuda::atomic_ref<type_int, cuda::thread_scope_device> atomic_dependency_count(device_min_dependency_count[job_id]);
 
-        
+        //printf("progress flag line 243 \n");
         
         while(atomic_dependency_count.load() > 0)
         {
@@ -284,7 +289,7 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
             continue;
         }
 
-      
+        //printf("progress flag line 289 \n");
         // printf("total neighbor at job id %d: %d, device node prev: %d\n", job_id, total_neighbor_count, device_node_list[job_id].prev);
        
         {
@@ -358,7 +363,7 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
             }
           
 
-            
+            //printf("progress flag line 363 \n");
             
             
             // update device_node_list with new locations after merging and update values after merging
@@ -373,7 +378,7 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
             });
         
             
-
+            //printf("progress flag line 378 \n");
              
             
             // compute cumulative sum
@@ -390,7 +395,7 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
             }
             device_node_list[job_id].sum = total_sum;
             
-            
+            //printf("progress flag line 395 \n");
 
             /* Generate Samples and set up links */
             for(type_int i = edge_start; i < edge_start + total_neighbor_count - 1; i++)
@@ -428,6 +433,7 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
 
             }
 
+            //printf("progress flag line 433 \n");
 
             // scale by total sum
             for(type_int i = edge_start; i < edge_start + total_neighbor_count; i++)
@@ -443,7 +449,7 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
                 device_edge_map[i + output_start_array[0]] = local_work_space[i]; 
             }
 
-      
+            
 
             // update dependency by subtracting away from ones impacted by current node/column
        
@@ -494,6 +500,8 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
         job_id = -1;
       
     }
+
+    
     auto end = std::chrono::steady_clock::now();
     std::chrono::duration<double> duration = end - start;
 
@@ -501,6 +509,7 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
     //     neg_track, positive_track, duration.count());
 
 
+    printf("finished  perform_factorization_device call \n");
     
 }
 
@@ -605,6 +614,7 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
     #pragma omp parallel
     {
         auto start = std::chrono::steady_clock::now();
+        printf("got past the first pragma omp parallel in factorization device \n");
         // cpu_set_t cpuset;
         // CPU_ZERO(&cpuset);
         // CPU_SET(omp_get_thread_num(), &cpuset); // Assign thread to CPU corresponding to thread_num
@@ -801,10 +811,12 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
 //END COPIED CODE
 
 // MODIFIED FROM DRIVER_LOCAL.CPP MAIN FILE
+// this code essentially copies the behavior of the main() function in driver_local.cpp, except I hardcoded in values for the arguments for simplicity.
+// currently hangs at the preconditioner if num_threads > 1; preconditioner works if num_threads=1 but the solves fail.
 int run_solve() {
 
   constexpr const char *input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
-  int num_threads = 2; 
+  int num_threads = 32; 
   constexpr char *output_filename = "output.txt";
   bool is_graph = 1;
 
