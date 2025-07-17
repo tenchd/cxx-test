@@ -10,10 +10,11 @@ fn main() {
         .std("c++20")
 //        .flags(["-O3", "-fopenmp", "-L", "-lm", "-lmkl_intel_lp64", "-lmkl_intel_thread", "-lmkl_core", "-liomp5", "-lpthread"])
         .flag("-O3")
+        .flag("-fopenmp")
         .compile("cxxbridge-test");
 
 
-    println!("cargo::rustc-link-arg=-fopenmp");
+    //println!("cargo::rustc-link-arg=-fopenmp");
     println!("cargo::rustc-link-lib=m");
     println!("cargo::rustc-link-lib=mkl_intel_lp64");
     println!("cargo::rustc-link-lib=mkl_intel_thread");

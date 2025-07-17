@@ -104,7 +104,7 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
             type_int thread_id, type_int total_threads, int64_t *test_vec, int *schedule_id) 
 {
 
-    printf("got into perform_factorization_device \n");
+    
     // // set thread schedule affinity
     // cpu_set_t cpuset;
     // CPU_ZERO(&cpuset);
@@ -150,13 +150,13 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
         }
     }
 
-    printf("progress flag line 153 \n");
+    
 
 
     // skip num_cols - 1 since the last column is empty
     //int static_id = 0;
 
-    printf("num_cols = %d \n",num_cols);
+    
 
     while(queue_access_index < num_cols)
     {
@@ -509,7 +509,7 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
     //     neg_track, positive_track, duration.count());
 
 
-    printf("finished  perform_factorization_device call \n");
+    
     
 }
 
@@ -614,7 +614,7 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
     #pragma omp parallel
     {
         auto start = std::chrono::steady_clock::now();
-        printf("got past the first pragma omp parallel in factorization device \n");
+        
         // cpu_set_t cpuset;
         // CPU_ZERO(&cpuset);
         // CPU_SET(omp_get_thread_num(), &cpuset); // Assign thread to CPU corresponding to thread_num
@@ -794,11 +794,10 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
     for (std::vector<double> right_hand_side: jl_cols){
         printf("---------------Performing solve %i\n", num_solve);
         num_solve++;
-        if(num_threads == 32)
-        {
+
         example_pcg_solver(processor.mat, precond_M, diagonal_entries.data(), is_graph, right_hand_side);
         //example_pcg_solver(processor.mat, precond_M, diagonal_entries.data(), is_graph);
-        }
+        
     }
 
     for(int li = 0; li < 10; li++)
@@ -816,7 +815,7 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
 int run_solve() {
 
   constexpr const char *input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
-  int num_threads = 32; 
+  int num_threads = 1; 
   constexpr char *output_filename = "output.txt";
   bool is_graph = 1;
 
