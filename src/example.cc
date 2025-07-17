@@ -804,7 +804,7 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
 int run_solve() {
 
   constexpr const char *input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
-  int num_threads = 32; 
+  int num_threads = 2; 
   constexpr char *output_filename = "output.txt";
   bool is_graph = 1;
 
