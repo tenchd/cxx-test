@@ -872,8 +872,8 @@ rust::Vec<Shared> f(rust::Vec<Shared> v) {
     stdv_value.push_back(i.v);
   }
 
-  writeVectorToFile2(stdv_value, "output.txt");
-  //run_solve();
+  //writeVectorToFile2(stdv_value, "output.txt");
+  run_solve();
 
   // write back into rust::Vec and return
   rust::Vec<Shared> output;
