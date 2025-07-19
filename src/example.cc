@@ -827,25 +827,9 @@ int run_solve() {
 
     //readVectorFromCSV("fake_jl.csv", jl_col);
     //printf("vec length %i, first element %f\n", jl_col.size(), jl_col[0]);
-    /*
-    std::cout << '\n';
-    for (double i: jl_col) {
-        std::cout << i << ' ';
-    }
-    std::cout << '\n';
-    */
+
     std::vector<std::vector<double>> jl_cols;
     readValuesFromFile("data/fake_jl_multi.csv", jl_cols);
-    
-    /*
-    for (std::vector<double> i: test_cols) {
-        for (double j: i){
-            std::cout << j << ' ';
-        }
-        std::cout << '\n';
-    }
-    */
-
 
     factorization_driver<custom_idx, double>(processor, num_threads, output_filename, is_graph, jl_cols);
     

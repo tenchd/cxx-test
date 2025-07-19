@@ -106,7 +106,7 @@ void enforce_zero_sum_vector(type_data *h_vec, size_t n)
 template <typename type_int, typename type_data>
 void example_pcg_solver(custom_space::sparse_matrix<type_int, type_data> &A, custom_space::sparse_matrix<type_int, type_data> &M, type_data *diagonal, bool is_graph, std::vector<type_data>& right_hand_side) {
 //void example_pcg_solver(custom_space::sparse_matrix<type_int, type_data> &A, custom_space::sparse_matrix<type_int, type_data> &M, type_data *diagonal, bool is_graph) {
-
+    
     if(!is_graph)
     {
         remove_last_row_and_column<type_int, type_data>(A);
@@ -129,6 +129,7 @@ void example_pcg_solver(custom_space::sparse_matrix<type_int, type_data> &A, cus
     std::vector<type_int> &col_ind = A.row_indices;
     std::vector<type_data> &values = A.values;
 
+    
      // Create MKL handle for A
      sparse_matrix_t A_handle = nullptr;
      matrix_descr descr_A = {SPARSE_MATRIX_TYPE_SYMMETRIC, SPARSE_FILL_MODE_FULL, SPARSE_DIAG_NON_UNIT};
@@ -151,7 +152,7 @@ void example_pcg_solver(custom_space::sparse_matrix<type_int, type_data> &A, cus
         // mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A_handle, descr_A, dummy.data(), 0, b.data());
     }
     
-
+   
     std::vector<type_data> x(n, 0.0); // initial guess
     std::vector<type_data> tmp(4 * n, 0.0);
     std::vector<type_int> ipar(128, 0);
@@ -161,6 +162,7 @@ void example_pcg_solver(custom_space::sparse_matrix<type_int, type_data> &A, cus
 
     // Initialize the solver
     dcg_init(&n, x.data(), b.data(), &RCI_request, ipar.data(), dpar.data(), tmp.data());
+
 
     ipar[0] = n;       // size
     ipar[1] = 6;       // display error option
@@ -172,7 +174,6 @@ void example_pcg_solver(custom_space::sparse_matrix<type_int, type_data> &A, cus
     ipar[10] = 1;      // preconditioning enabled
 
     dpar[0] = 2e-7; // tolerance
-
 
 
 
@@ -302,8 +303,6 @@ void example_pcg_solver(custom_space::sparse_matrix<type_int, type_data> &A, cus
     //    std::cout << i << ' ';
     //}
     writeVectorToFile2(x, "x.data");
-
-
     mkl_sparse_destroy(A_handle);
     mkl_sparse_destroy(M_handle);
     mkl_sparse_destroy(MT_handle);
