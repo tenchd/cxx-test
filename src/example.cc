@@ -874,9 +874,47 @@ rust::Vec<Shared> f(rust::Vec<Shared> v) {
   return output;
 }
 
-void go(FlattenedVec shared_jl_cols) {
-    for (auto shared: shared_jl_cols.vec) {
-        std::cout << shared.v << ", ";
+//void unroll_vector(FlattenedVec shared_jl_cols, std::vector<std::vector<double>> &jl_cols) {
+std::vector<std::vector<double>> unroll_vector(FlattenedVec shared_jl_cols) {
+    int n = shared_jl_cols.outer_length.v;
+    int m = shared_jl_cols.rows.v;
+    std::vector<std::vector<double>> jl_cols(n, std::vector<double>(m, 0.0));
+    auto num_rows = shared_jl_cols.outer_length.v;
+    int counter = 0;
+    for (Shared s: shared_jl_cols.vec) {
+        int current_column = (int) counter / num_rows;
+        int current_row = counter % num_rows;
+        
+        jl_cols.at(current_column).at(current_row) = s.v;
+
+        counter += 1;
     }
+    return jl_cols;
+}
+
+void go(FlattenedVec shared_jl_cols) {
+
+    std::vector<Shared> stdv;
+    std::copy(shared_jl_cols.vec.begin(), shared_jl_cols.vec.end(), std::back_inserter(stdv));
+    assert(shared_jl_cols.vec.size() == stdv.size());
+
+    for (auto i: stdv) {
+        std::cout << i.v << ", ";
+    }
+
     std::cout << std::endl << shared_jl_cols.outer_length.v << std::endl;
+
+    std::vector<std::vector<double>> jl_cols = unroll_vector(shared_jl_cols);
+
+    for (auto col: jl_cols) {
+        for (auto val: col) {
+            std::cout << val << ", ";
+        }
+    }
+    std::cout << std::endl;
+
+    // for (auto shared: shared_jl_cols.vec) {
+    //     std::cout << shared.v << ", ";
+    // }
+    // std::cout << std::endl << shared_jl_cols.outer_length.v << std::endl;
 }

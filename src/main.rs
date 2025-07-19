@@ -22,6 +22,7 @@ mod ffi {
     struct FlattenedVec {
         vec: Vec<Shared>,
         outer_length: SharedInt,
+        rows: SharedInt,
     }
 
     unsafe extern "C++" {
@@ -58,8 +59,10 @@ fn read_vecs_from_file_flat(filename: String) -> ffi::FlattenedVec {
     let mut jl_vec: Vec<ffi::Shared> = vec![];
     let mut line_length: u64 = 0; 
     let mut first: bool = true;
+    let mut line_counter = 0;
 
     for line in reader.lines() {
+        line_counter += 1;
         let mut col: Vec<ffi::Shared> = line.expect("uh oh").split(",")
                                         .map(|x| x.trim().parse::<f64>().unwrap())
                                         .map(|v| ffi::Shared { v })
@@ -73,7 +76,7 @@ fn read_vecs_from_file_flat(filename: String) -> ffi::FlattenedVec {
     }
 
 
-    let mut jl_cols_flat = ffi::FlattenedVec{vec: jl_vec, outer_length: ffi::SharedInt{v: line_length}};
+    let mut jl_cols_flat = ffi::FlattenedVec{vec: jl_vec, outer_length: ffi::SharedInt{v: line_length}, rows: ffi::SharedInt {v: line_counter}};
     jl_cols_flat
 }
 
