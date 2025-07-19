@@ -874,6 +874,9 @@ rust::Vec<Shared> f(rust::Vec<Shared> v) {
   return output;
 }
 
-void go(rust::Vec<rust::Vec<Shared>> shared_jl_cols) {
-
+void go(FlattenedVec shared_jl_cols) {
+    for (auto shared: shared_jl_cols.vec) {
+        std::cout << shared.v << ", ";
+    }
+    std::cout << std::endl << shared_jl_cols.outer_length.v << std::endl;
 }
