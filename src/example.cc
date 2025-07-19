@@ -800,10 +800,6 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
         
     }
 
-    for(int li = 0; li < 10; li++)
-    {
-        printf("\n");
-    }  
 }
 
 
@@ -812,7 +808,7 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
 // MODIFIED FROM DRIVER_LOCAL.CPP MAIN FILE
 // this code essentially copies the behavior of the main() function in driver_local.cpp, except I hardcoded in values for the arguments for simplicity.
 // currently hangs at the preconditioner if num_threads > 1; preconditioner works if num_threads=1 but the solves fail.
-int run_solve() {
+int run_solve(std::vector<std::vector<double>> jl_cols) {
 
   constexpr const char *input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
   int num_threads = 1; 
@@ -828,8 +824,8 @@ int run_solve() {
     //readVectorFromCSV("fake_jl.csv", jl_col);
     //printf("vec length %i, first element %f\n", jl_col.size(), jl_col[0]);
 
-    std::vector<std::vector<double>> jl_cols;
-    readValuesFromFile("data/fake_jl_multi.csv", jl_cols);
+    //std::vector<std::vector<double>> jl_cols;
+    //readValuesFromFile("data/fake_jl_multi.csv", jl_cols);
 
     factorization_driver<custom_idx, double>(processor, num_threads, output_filename, is_graph, jl_cols);
     
@@ -868,15 +864,16 @@ rust::Vec<Shared> f(rust::Vec<Shared> v) {
   }
 
   //writeVectorToFile2(stdv_value, "output.txt");
-  run_solve();
+  //run_solve();
 
   // write back into rust::Vec and return
   rust::Vec<Shared> output;
   for (auto i: stdv) {
     output.push_back(i);
   }
-
-  
-
   return output;
+}
+
+void go(rust::Vec<rust::Vec<Shared>> shared_jl_cols) {
+
 }
