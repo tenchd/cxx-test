@@ -520,7 +520,8 @@ bool compare(const Edge<int, double> &a, const Edge<int, double> &b)
 
 
 template <typename type_int, typename type_data>
-void factorization_driver(sparse_matrix_processor<type_int, type_data> &processor, type_int num_threads, char* path, bool is_graph, std::vector<std::vector<type_data>>& jl_cols)
+void factorization_driver(sparse_matrix_processor<type_int, type_data> &processor, type_int num_threads, char* path, bool is_graph, \
+    std::vector<std::vector<type_data>>& jl_cols, std::vector<std::vector<type_data>>& solution)
 //void factorization_driver(sparse_matrix_processor<type_int, type_data> &processor, type_int num_threads, char* path, bool is_graph)
 {
     assert(INT_MAX == 2147483647);
@@ -793,11 +794,13 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
     auto num_solve = 1;
     for (std::vector<double> right_hand_side: jl_cols){
         printf("---------------Performing solve %i\n", num_solve);
-        num_solve++;
 
-        example_pcg_solver(processor.mat, precond_M, diagonal_entries.data(), is_graph, right_hand_side);
+        std::vector<type_data> solution_col = example_pcg_solver(processor.mat, precond_M, diagonal_entries.data(), is_graph, right_hand_side);
         //example_pcg_solver(processor.mat, precond_M, diagonal_entries.data(), is_graph);
-        
+
+        //printf("trying to write to solution column %d\n", num_solve-1);
+        solution.at(num_solve-1) = solution_col;
+        num_solve++;
     }
 
 }
@@ -808,7 +811,7 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
 // MODIFIED FROM DRIVER_LOCAL.CPP MAIN FILE
 // this code essentially copies the behavior of the main() function in driver_local.cpp, except I hardcoded in values for the arguments for simplicity.
 // currently hangs at the preconditioner if num_threads > 1; preconditioner works if num_threads=1 but the solves fail.
-int run_solve(std::vector<std::vector<double>> jl_cols) {
+void run_solve(std::vector<std::vector<double>> jl_cols, std::vector<std::vector<double>>& solution) {
 
   constexpr const char *input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
   int num_threads = 1; 
@@ -827,11 +830,8 @@ int run_solve(std::vector<std::vector<double>> jl_cols) {
     //std::vector<std::vector<double>> jl_cols;
     //readValuesFromFile("data/fake_jl_multi.csv", jl_cols);
 
-    factorization_driver<custom_idx, double>(processor, num_threads, output_filename, is_graph, jl_cols);
+    factorization_driver<custom_idx, double>(processor, num_threads, output_filename, is_graph, jl_cols, solution);
     
-
-  //  MPI_Finalize();
-    return 0;
 
 }
 
@@ -876,9 +876,10 @@ rust::Vec<Shared> f(rust::Vec<Shared> v) {
 
 //void unroll_vector(FlattenedVec shared_jl_cols, std::vector<std::vector<double>> &jl_cols) {
 std::vector<std::vector<double>> unroll_vector(FlattenedVec shared_jl_cols) {
+    
     int n = shared_jl_cols.outer_length.v;
     int m = shared_jl_cols.rows.v;
-    std::vector<std::vector<double>> jl_cols(n, std::vector<double>(m, 0.0));
+    std::vector<std::vector<double>> jl_cols(m, std::vector<double>(n, 0.0));
     auto num_rows = shared_jl_cols.outer_length.v;
     int counter = 0;
     for (Shared s: shared_jl_cols.vec) {
@@ -894,24 +895,43 @@ std::vector<std::vector<double>> unroll_vector(FlattenedVec shared_jl_cols) {
 
 void go(FlattenedVec shared_jl_cols) {
 
-    std::vector<Shared> stdv;
-    std::copy(shared_jl_cols.vec.begin(), shared_jl_cols.vec.end(), std::back_inserter(stdv));
-    assert(shared_jl_cols.vec.size() == stdv.size());
+    // std::vector<Shared> stdv;
+    // std::copy(shared_jl_cols.vec.begin(), shared_jl_cols.vec.end(), std::back_inserter(stdv));
+    // assert(shared_jl_cols.vec.size() == stdv.size());
 
-    for (auto i: stdv) {
-        std::cout << i.v << ", ";
-    }
+    // for (auto i: stdv) {
+    //     std::cout << i.v << ", ";
+    // }
 
-    std::cout << std::endl << shared_jl_cols.outer_length.v << std::endl;
+    // std::cout << std::endl << shared_jl_cols.outer_length.v << std::endl;
+
+    int n = shared_jl_cols.outer_length.v;
+    int m = shared_jl_cols.rows.v;
 
     std::vector<std::vector<double>> jl_cols = unroll_vector(shared_jl_cols);
 
-    for (auto col: jl_cols) {
-        for (auto val: col) {
-            std::cout << val << ", ";
+    std::vector<std::vector<double>> solution(m, std::vector<double>(n, 0.0));
+    //std::vector<std::vector<double>> jl_cols(m, std::vector<double>(n, 0.0));
+
+    run_solve(jl_cols, solution);
+
+    // for (auto col: jl_cols) {
+    //     for (auto val: col) {
+    //         std::cout << val << ", ";
+    //     }
+    // }
+    // std::cout << std::endl;
+
+    for (auto col: solution) {
+        std::cout << col.at(0) << ", ";
+        auto check = col.at(0);
+        for (auto i: col){
+            assert(i != 0.0); //unsure this line is actually checking this. entering some value
         }
     }
     std::cout << std::endl;
+
+
 
     // for (auto shared: shared_jl_cols.vec) {
     //     std::cout << shared.v << ", ";

@@ -104,7 +104,7 @@ void enforce_zero_sum_vector(type_data *h_vec, size_t n)
 }
 
 template <typename type_int, typename type_data>
-void example_pcg_solver(custom_space::sparse_matrix<type_int, type_data> &A, custom_space::sparse_matrix<type_int, type_data> &M, type_data *diagonal, bool is_graph, std::vector<type_data>& right_hand_side) {
+std::vector<type_data> example_pcg_solver(custom_space::sparse_matrix<type_int, type_data> &A, custom_space::sparse_matrix<type_int, type_data> &M, type_data *diagonal, bool is_graph, std::vector<type_data>& right_hand_side) {
 //void example_pcg_solver(custom_space::sparse_matrix<type_int, type_data> &A, custom_space::sparse_matrix<type_int, type_data> &M, type_data *diagonal, bool is_graph) {
     
     if(!is_graph)
@@ -302,7 +302,7 @@ void example_pcg_solver(custom_space::sparse_matrix<type_int, type_data> &A, cus
     //for (auto i : x) {
     //    std::cout << i << ' ';
     //}
-    writeVectorToFile2(x, "x.data");
+    //writeVectorToFile2(x, "x.data");
     mkl_sparse_destroy(A_handle);
     mkl_sparse_destroy(M_handle);
     mkl_sparse_destroy(MT_handle);
@@ -311,5 +311,7 @@ void example_pcg_solver(custom_space::sparse_matrix<type_int, type_data> &A, cus
     // for (double val : x)
     //     std::cout << val << " ";
     std::cout << "\n";
+
+    return x;
 }
 
