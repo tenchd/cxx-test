@@ -32,6 +32,8 @@ mod ffi {
         fn go(shared_jl_cols: FlattenedVec) -> FlattenedVec;
 
         fn sprs_test(col_ptrs: Vec<usize>, row_indices: Vec<usize>, values: Vec<f64>);
+
+        fn sprs_correctness_test(col_ptrs: Vec<usize>, row_indices: Vec<usize>, values: Vec<f64>);
     }
 }
 
@@ -99,20 +101,35 @@ fn main() {
     
     //println!("{}",result.vec[0]);
 
-    let a = CsMat::new_csc((3, 3),
-                       vec![0, 2, 4, 5],
-                       vec![0, 1, 0, 2, 2],
-                       vec![1., 2., 3., 4., 5.]);
 
-    let col_ptrs = a.indptr().as_slice().unwrap().to_vec();
-    let row_indices = a.indices().to_vec();
-    let values= a.data().to_vec();
-    println!("col_ptrs in rust: {:?}", col_ptrs);
-    println!("row_indices in rust: {:?}", row_indices);
-    println!("values in rust: {:?}", values);
-    ffi::sprs_test(col_ptrs, row_indices, values);
 
-    read_mtx("data/cage3.mtx");
-    read_mtx("/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx");
+    // let a = CsMat::new_csc((3, 3),
+    //                    vec![0, 2, 4, 5],
+    //                    vec![0, 1, 0, 2, 2],
+    //                    vec![1., 2., 3., 4., 5.]);
+
+    // let col_ptrs = a.indptr().as_slice().unwrap().to_vec();
+    // let row_indices = a.indices().to_vec();
+    // let values= a.data().to_vec();
+    // println!("col_ptrs in rust: {:?}", col_ptrs);
+    // println!("row_indices in rust: {:?}", row_indices);
+    // println!("values in rust: {:?}", values);
+    // ffi::sprs_test(col_ptrs, row_indices, values);
+
+    //read_mtx("data/cage3.mtx");
+    let physics_csc = read_mtx("/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx");
+    
+    for i in physics_csc.diag_iter(){
+        assert!(*i.unwrap() != 0.0 as f64)
+    }
+
+    let phys_col_ptrs = physics_csc.indptr().as_slice().unwrap().to_vec();
+    let phys_row_indices = physics_csc.indices().to_vec();
+    let phys_values= physics_csc.data().to_vec();
+    println!("phys col_ptrs size in rust: {:?}. first value: {}", phys_col_ptrs.len(), phys_col_ptrs[0]);
+    println!("phys row_indices size in rust: {:?}. first value: {}", phys_row_indices.len(), phys_row_indices[0]);
+    println!("phys values size in rust: {:?}. first value: {}", phys_values.len(), phys_values[0]);
+    println!("nodes in phys csc: {}, {}", physics_csc.cols(), physics_csc.rows());
+    ffi::sprs_correctness_test(phys_col_ptrs, phys_row_indices, phys_values);
 
 }

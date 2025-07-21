@@ -891,3 +891,16 @@ void sprs_test(rust::Vec<size_t> rust_col_ptrs, rust::Vec<size_t> rust_row_indic
     tester.printCSC();
     printf("%d\n", tester.nonZeros());
 }
+
+
+void sprs_correctness_test(rust::Vec<size_t> rust_col_ptrs, rust::Vec<size_t> rust_row_indices, rust::Vec<double> rust_values) {
+    std::vector<double> values;
+    std::copy(rust_values.begin(), rust_values.end(), std::back_inserter(values));
+    std::vector<size_t> col_ptrs;
+    std::copy(rust_col_ptrs.begin(), rust_col_ptrs.end(), std::back_inserter(col_ptrs));
+    std::vector<size_t> row_indices;
+    std::copy(rust_row_indices.begin(), rust_row_indices.end(), std::back_inserter(row_indices));
+    printf("phys col_ptrs size in c++: %d. first value: %d\n", col_ptrs.size(), col_ptrs.at(0));
+    printf("phys row_indices size in c++: %d. first value: %d\n", row_indices.size(), row_indices.at(0));
+    printf("phys values size in c++: %d. first value: %f\n", values.size(), values.at(0));
+}

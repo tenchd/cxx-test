@@ -30,7 +30,7 @@ namespace custom_space {
         sparse_matrix(type_int numRows, type_int numCols, std::vector<type_data>&& input_values, 
             std::vector<type_int>&& input_row_indices, std::vector<type_int>&& input_col_ptrs) : num_rows(numRows), num_cols(numCols), 
                 values(std::move(input_values)), row_indices(std::move(input_row_indices)), col_ptrs(std::move(input_col_ptrs)) {
-
+                    
         }
 
         // Constructor to initialize the matrix dimensions and column pointers

@@ -11,9 +11,7 @@ FlattenedVec go(FlattenedVec shared_jl_cols);
 
 void sprs_test(rust::Vec<size_t> rust_col_ptrs, rust::Vec<size_t> rust_row_indices, rust::Vec<double> rust_values);
 
-/*
-void stupidconnorlalala() {
-    std::cout << "you are not stupid" << std::endl;
-}
-*/
+
+void sprs_correctness_test(rust::Vec<size_t> rust_col_ptrs, rust::Vec<size_t> rust_row_indices, rust::Vec<double> rust_values);
+
 
