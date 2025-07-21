@@ -874,5 +874,9 @@ void sprs_test(rust::Vec<size_t> rust_col_ptrs, rust::Vec<size_t> rust_row_indic
     std::copy(row_indices.begin(), row_indices.end(), std::back_inserter(rust_row_indices));
     size_t num_rows = 3;
     size_t num_cols = 3;
-    custom_space::sparse_matrix tester = custom_space::sparse_matrix(num_rows, num_cols, values, row_indices, col_ptrs);
+    custom_space::sparse_matrix tester = custom_space::sparse_matrix(num_rows, num_cols, std::move(values), std::move(row_indices), std::move(col_ptrs));
+    for (auto i: tester){
+        std::cout << i << ", ";
+    }
+    std::cout << std::endl;
 }
