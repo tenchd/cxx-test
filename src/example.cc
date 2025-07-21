@@ -869,14 +869,25 @@ void sprs_test(rust::Vec<size_t> rust_col_ptrs, rust::Vec<size_t> rust_row_indic
     std::vector<double> values;
     std::copy(rust_values.begin(), rust_values.end(), std::back_inserter(values));
     std::vector<size_t> col_ptrs;
-    std::copy(col_ptrs.begin(), col_ptrs.end(), std::back_inserter(rust_col_ptrs));
+    std::copy(rust_col_ptrs.begin(), rust_col_ptrs.end(), std::back_inserter(col_ptrs));
     std::vector<size_t> row_indices;
-    std::copy(row_indices.begin(), row_indices.end(), std::back_inserter(rust_row_indices));
-    size_t num_rows = 3;
-    size_t num_cols = 3;
-    custom_space::sparse_matrix tester = custom_space::sparse_matrix(num_rows, num_cols, std::move(values), std::move(row_indices), std::move(col_ptrs));
-    for (auto i: tester){
+    std::copy(rust_row_indices.begin(), rust_row_indices.end(), std::back_inserter(row_indices));
+    std::cout << col_ptrs.size() << std::endl;
+    for (auto i: values) {
+        std::cout << i << " , ";
+    }
+    std::cout << std::endl;
+    for (auto i: col_ptrs) {
         std::cout << i << ", ";
     }
     std::cout << std::endl;
+    for (auto i: row_indices) {
+        std::cout << i << ", ";
+    }
+    std::cout << std::endl;
+    size_t num_rows = 3;
+    size_t num_cols = 3;
+    custom_space::sparse_matrix tester = custom_space::sparse_matrix(num_rows, num_cols, std::move(values), std::move(row_indices), std::move(col_ptrs));
+    tester.printCSC();
+    printf("%d\n", tester.nonZeros());
 }

@@ -100,5 +100,11 @@ fn main() {
                        vec![0, 1, 0, 2, 2],
                        vec![1., 2., 3., 4., 5.]);
 
-    ffi::sprs_test(a.indptr().as_slice().unwrap().to_vec(), a.indices().to_vec(), a.data().to_vec());
+    let col_ptrs = a.indptr().as_slice().unwrap().to_vec();
+    let row_indices = a.indices().to_vec();
+    let values= a.data().to_vec();
+    println!("col_ptrs in rust: {:?}", col_ptrs);
+    println!("row_indices in rust: {:?}", row_indices);
+    println!("values in rust: {:?}", values);
+    ffi::sprs_test(col_ptrs, row_indices, values);
 }
