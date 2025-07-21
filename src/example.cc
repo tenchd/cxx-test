@@ -874,49 +874,84 @@ rust::Vec<Shared> f(rust::Vec<Shared> v) {
   return output;
 }
 
-//void unroll_vector(FlattenedVec shared_jl_cols, std::vector<std::vector<double>> &jl_cols) {
-std::vector<std::vector<double>> unroll_vector(FlattenedVec shared_jl_cols) {
+// std::vector<std::vector<double>> unroll_vector(FlattenedVec shared_jl_cols) {
     
-    int n = shared_jl_cols.num_cols.v;
-    int m = shared_jl_cols.num_rows.v;
+//     int n = shared_jl_cols.num_cols.v;
+//     int m = shared_jl_cols.num_rows.v;
+    
+//     std::vector<std::vector<double>> jl_cols(n, std::vector<double>(m, 0.0));
+    
+//     int counter = 0;
+//     for (Shared s: shared_jl_cols.vec) {
+
+//         int current_column = (int) counter / m;
+//         int current_row = counter % m;
+//         //printf("heh");
+//         jl_cols.at(current_column).at(current_row) = s.v;
+
+//         counter += 1;
+//     }
+//     return jl_cols;
+// }
+
+std::vector<std::vector<double>> unroll_vector2(FlattenedVec2 shared_jl_cols) {
+    
+    int n = shared_jl_cols.num_cols;
+    int m = shared_jl_cols.num_rows;
     
     std::vector<std::vector<double>> jl_cols(n, std::vector<double>(m, 0.0));
     
     int counter = 0;
-    for (Shared s: shared_jl_cols.vec) {
+    for (double s: shared_jl_cols.vec) {
 
         int current_column = (int) counter / m;
         int current_row = counter % m;
         //printf("heh");
-        jl_cols.at(current_column).at(current_row) = s.v;
+        jl_cols.at(current_column).at(current_row) = s;
 
         counter += 1;
     }
     return jl_cols;
 }
 
-FlattenedVec flatten_vector(std::vector<std::vector<double>> original) {
+// FlattenedVec flatten_vector(std::vector<std::vector<double>> original) {
+//     int n = original.size();
+//     int m = original.at(0).size();
+    
+//     rust::cxxbridge1::Vec<Shared> values = {};
+//     for (auto col: original) {
+//         for (auto i: col) {
+//             values.push_back(Shared{i});
+//         }
+//     }
+
+//     FlattenedVec output = {values, n, m};
+//     return output;
+    
+// }
+
+FlattenedVec2 flatten_vector2(std::vector<std::vector<double>> original) {
     int n = original.size();
     int m = original.at(0).size();
     
-    rust::cxxbridge1::Vec<Shared> values = {};
+    rust::cxxbridge1::Vec<double> values = {};
     for (auto col: original) {
         for (auto i: col) {
-            values.push_back(Shared{i});
+            values.push_back(i);
         }
     }
 
-    FlattenedVec output = {values, n, m};
+    FlattenedVec2 output = {values, n, m};
     return output;
     
 }
 
-FlattenedVec go(FlattenedVec shared_jl_cols) {
+FlattenedVec2 go(FlattenedVec2 shared_jl_cols) {
 
-    int n = shared_jl_cols.num_cols.v;
-    int m = shared_jl_cols.num_rows.v;
+    int n = shared_jl_cols.num_cols;
+    int m = shared_jl_cols.num_rows;
 
-    std::vector<std::vector<double>> jl_cols = unroll_vector(shared_jl_cols);
+    std::vector<std::vector<double>> jl_cols = unroll_vector2(shared_jl_cols);
 
     std::vector<std::vector<double>> solution(n, std::vector<double>(m, 0.0));
 
@@ -935,7 +970,7 @@ FlattenedVec go(FlattenedVec shared_jl_cols) {
     //rust::cxxbridge1::Vec<Shared> fake_sol = {Shared{1.0}, Shared{2.0}, Shared{3.0}};
 
     //FlattenedVec flat_solution = {fake_sol, SharedInt{1}, SharedInt{3}};
-    FlattenedVec flat_solution = flatten_vector(solution);
+    FlattenedVec2 flat_solution = flatten_vector2(solution);
 
     return flat_solution;
 

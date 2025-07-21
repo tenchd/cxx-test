@@ -7,7 +7,7 @@
 
 rust::Vec<Shared> f(rust::Vec<Shared> elements);
 
-FlattenedVec go(FlattenedVec shared_jl_cols);
+FlattenedVec2 go(FlattenedVec2 shared_jl_cols);
 
 rust::Vec<size_t> no_sharing(rust::Vec<size_t> elements);
 
