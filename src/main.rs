@@ -113,6 +113,6 @@ fn main() {
     ffi::sprs_test(col_ptrs, row_indices, values);
 
     read_mtx("data/cage3.mtx");
-    
+    read_mtx("/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx");
 
 }
