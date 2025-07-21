@@ -214,6 +214,7 @@ class sparse_matrix_processor {
         // add the diagonal entries to the end, will be in correct location after sort
         if(add_diagonal)
         {
+            printf("went into add_diagonal code\n");
             for(size_t i = 0; i < num_cols; i++)
             {
                 rows.push_back(i);
@@ -231,6 +232,9 @@ class sparse_matrix_processor {
                 }
                 values[original_cols_size + cols[i]] += fabs(values[i]);
             }
+        }
+        else {
+            printf("didn't went into add_diagonal code\n");
         }
        
 

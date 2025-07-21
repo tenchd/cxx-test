@@ -97,7 +97,7 @@ fn main() {
 
     //let testvec = ffi::FlattenedVec {vec: new_elements, outer_length: ffi::SharedInt {v: 1},};
 
-    //let result = ffi::go(shared_jl_cols_flat);
+    let result = ffi::go(shared_jl_cols_flat);
     
     //println!("{}",result.vec[0]);
 
