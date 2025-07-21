@@ -3,7 +3,9 @@ use std::io::{self, prelude::*, BufReader};
 
 use cxx::Vector;
 
-use crate::ffi::no_sharing;
+use sprs::{CsMat};
+
+//use crate::ffi::no_sharing;
 
 
 
@@ -11,23 +13,8 @@ use crate::ffi::no_sharing;
 
 #[cxx::bridge]
 mod ffi {
-    #[derive(Debug)]
-    struct Shared {
-        v: f64,
-    }
 
-    struct SharedInt {
-        v: u64,
-    }
-
-    // keeps track of dimensions of flattened vector to rebuild safely in c++
     struct FlattenedVec {
-        vec: Vec<Shared>,
-        num_cols: SharedInt,
-        num_rows: SharedInt,
-    }
-
-    struct FlattenedVec2 {
         vec: Vec<f64>,
         num_cols: usize,
         num_rows: usize,
@@ -36,33 +23,33 @@ mod ffi {
     unsafe extern "C++" {
         include!("cxx-test/include/example.h");
 
-        fn f(elements: Vec<Shared>) -> Vec<Shared>;
+        //fn f(elements: Vec<Shared>) -> Vec<Shared>;
 
-        fn go(shared_jl_cols: FlattenedVec2) -> FlattenedVec2;
+        fn go(shared_jl_cols: FlattenedVec) -> FlattenedVec;
 
-        fn no_sharing(elements: Vec<usize>) -> Vec<usize>;
+        fn sprs_test(col_ptrs: Vec<usize>, row_indices: Vec<usize>, values: Vec<f64>);
     }
 }
 
-fn read_vecs_from_file(filename: String) -> Vec<Vec<ffi::Shared>>{
-    let file = File::open(filename).unwrap();
-    let reader = BufReader::new(file);
+// fn read_vecs_from_file(filename: String) -> Vec<Vec<ffi::Shared>>{
+//     let file = File::open(filename).unwrap();
+//     let reader = BufReader::new(file);
 
-    let mut jl_cols: Vec<Vec<ffi::Shared>> = vec![];
+//     let mut jl_cols: Vec<Vec<ffi::Shared>> = vec![];
 
-    let column: usize = 0;
-    for line in reader.lines() {
-        let col: Vec<ffi::Shared> = line.expect("uh oh").split(",")
-                                        .map(|x| x.trim().parse::<f64>().unwrap())
-                                        .map(|v| ffi::Shared { v })
-                                        .collect();
-        println!("{}", col.len());
-        jl_cols.push(col);
-    }
-    jl_cols
-}
+//     let column: usize = 0;
+//     for line in reader.lines() {
+//         let col: Vec<ffi::Shared> = line.expect("uh oh").split(",")
+//                                         .map(|x| x.trim().parse::<f64>().unwrap())
+//                                         .map(|v| ffi::Shared { v })
+//                                         .collect();
+//         println!("{}", col.len());
+//         jl_cols.push(col);
+//     }
+//     jl_cols
+// }
 
-fn read_vecs_from_file_flat2(filename: String) -> ffi::FlattenedVec2 {
+fn read_vecs_from_file_flat(filename: String) -> ffi::FlattenedVec {
     let file = File::open(filename).unwrap();
     let reader = BufReader::new(file);
 
@@ -86,50 +73,16 @@ fn read_vecs_from_file_flat2(filename: String) -> ffi::FlattenedVec2 {
     }
     //println!("line length = {}, num_lines = {}", line_length, line_counter);
 
-    let mut jl_cols_flat = ffi::FlattenedVec2{vec: jl_vec, num_cols: line_counter, num_rows: line_length};
+    let mut jl_cols_flat = ffi::FlattenedVec{vec: jl_vec, num_cols: line_counter, num_rows: line_length};
     jl_cols_flat
 }
 
-// fn read_vecs_from_file_flat(filename: String) -> ffi::FlattenedVec {
-//     let file = File::open(filename).unwrap();
-//     let reader = BufReader::new(file);
-
-//     let mut jl_vec: Vec<ffi::Shared> = vec![];
-//     let mut line_length: u64 = 0; 
-//     let mut first: bool = true;
-//     let mut line_counter = 0;
-
-//     for line in reader.lines() {
-//         line_counter += 1;
-//         let mut col: Vec<ffi::Shared> = line.expect("uh oh").split(",")
-//                                         .map(|x| x.trim().parse::<f64>().unwrap())
-//                                         .map(|v| ffi::Shared { v })
-//                                         .collect();
-//         if first {
-//             line_length = col.len().try_into().unwrap();
-//         }
-//         let current_line_length= col.len().try_into().unwrap();
-//         assert_eq!(line_length, current_line_length);
-//         jl_vec.append(&mut col);
-//     }
-//     //println!("line length = {}, num_lines = {}", line_length, line_counter);
-
-//     let mut jl_cols_flat = ffi::FlattenedVec{vec: jl_vec, num_cols: ffi::SharedInt{v: line_counter}, num_rows: ffi::SharedInt {v: line_length}};
-//     jl_cols_flat
-// }
-
 
 fn main() {
-    // let shared = |v| ffi::Shared { v };
-    // let elements = vec![shared(3.0), shared(2.0), shared(1.0)];
-    // let output = ffi::f(elements);
-    // for i in output {
-    //     println!("{}", i.v);
-    // }
 
     let filename = "data/fake_jl_multi.csv".to_string();
 
-    let shared_jl_cols_flat = read_vecs_from_file_flat2(filename);
+    let shared_jl_cols_flat = read_vecs_from_file_flat(filename);
     let m = shared_jl_cols_flat.num_cols;
     let n = shared_jl_cols_flat.num_rows;
 
@@ -138,9 +91,14 @@ fn main() {
 
     //let testvec = ffi::FlattenedVec {vec: new_elements, outer_length: ffi::SharedInt {v: 1},};
 
-    let result = ffi::go(shared_jl_cols_flat);
+    //let result = ffi::go(shared_jl_cols_flat);
     
-    // let elements_vec = vec!{1,2,3};
-    // let result = no_sharing(elements_vec);
-    // println!("{:?}", result);
+    //println!("{}",result.vec[0]);
+
+    let a = CsMat::new_csc((3, 3),
+                       vec![0, 2, 4, 5],
+                       vec![0, 1, 0, 2, 2],
+                       vec![1., 2., 3., 4., 5.]);
+
+    ffi::sprs_test(a.indptr().as_slice().unwrap().to_vec(), a.indices().to_vec(), a.data().to_vec());
 }

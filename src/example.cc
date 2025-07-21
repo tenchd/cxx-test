@@ -820,82 +820,12 @@ void run_solve(std::vector<std::vector<double>> jl_cols, std::vector<std::vector
 
   printf("problem: %s\n", input_filename);
     sparse_matrix_processor<custom_idx, double> processor(input_filename);
-    //printf("DAVIDA %i\n", processor.mat.num_rows); // gives n +1 for some reason
-    //auto nodes = processor.mat.num_rows - 1; 
-    //std::vector<double> jl_col; // make empty vector of length n for jl sketch column
-
-    //readVectorFromCSV("fake_jl.csv", jl_col);
-    //printf("vec length %i, first element %f\n", jl_col.size(), jl_col[0]);
-
-    //std::vector<std::vector<double>> jl_cols;
-    //readValuesFromFile("data/fake_jl_multi.csv", jl_cols);
-
+    
     factorization_driver<custom_idx, double>(processor, num_threads, output_filename, is_graph, jl_cols, solution);
-    
-
 }
 
+std::vector<std::vector<double>> unroll_vector(FlattenedVec shared_jl_cols) {
 
-
-void increment_all_values(std::vector<Shared> &stdv) {
-  for (auto i = 0; i < 3; i++) {
-    stdv[i].v++;
-  }
-}
-
-
-rust::Vec<Shared> f(rust::Vec<Shared> v) {
-  for (auto shared : v) {
-    std::cout << shared.v << std::endl;
-  }
-
-  // Copy the elements to a C++ std::vector using STL algorithm.
-  std::vector<Shared> stdv;
-  std::copy(v.begin(), v.end(), std::back_inserter(stdv));
-  assert(v.size() == stdv.size());
-  increment_all_values(stdv);
-  for (auto i: stdv) {
-    std::cout << i.v << std::endl;
-  }
-
-  std::vector<int> stdv_value;
-  for (auto i: stdv) {
-    stdv_value.push_back(i.v);
-  }
-
-  //writeVectorToFile2(stdv_value, "output.txt");
-  //run_solve();
-
-  // write back into rust::Vec and return
-  rust::Vec<Shared> output;
-  for (auto i: stdv) {
-    output.push_back(i);
-  }
-  return output;
-}
-
-// std::vector<std::vector<double>> unroll_vector(FlattenedVec shared_jl_cols) {
-    
-//     int n = shared_jl_cols.num_cols.v;
-//     int m = shared_jl_cols.num_rows.v;
-    
-//     std::vector<std::vector<double>> jl_cols(n, std::vector<double>(m, 0.0));
-    
-//     int counter = 0;
-//     for (Shared s: shared_jl_cols.vec) {
-
-//         int current_column = (int) counter / m;
-//         int current_row = counter % m;
-//         //printf("heh");
-//         jl_cols.at(current_column).at(current_row) = s.v;
-
-//         counter += 1;
-//     }
-//     return jl_cols;
-// }
-
-std::vector<std::vector<double>> unroll_vector2(FlattenedVec2 shared_jl_cols) {
-    
     int n = shared_jl_cols.num_cols;
     int m = shared_jl_cols.num_rows;
     
@@ -903,90 +833,46 @@ std::vector<std::vector<double>> unroll_vector2(FlattenedVec2 shared_jl_cols) {
     
     int counter = 0;
     for (double s: shared_jl_cols.vec) {
-
         int current_column = (int) counter / m;
         int current_row = counter % m;
-        //printf("heh");
         jl_cols.at(current_column).at(current_row) = s;
-
         counter += 1;
     }
     return jl_cols;
 }
 
-// FlattenedVec flatten_vector(std::vector<std::vector<double>> original) {
-//     int n = original.size();
-//     int m = original.at(0).size();
-    
-//     rust::cxxbridge1::Vec<Shared> values = {};
-//     for (auto col: original) {
-//         for (auto i: col) {
-//             values.push_back(Shared{i});
-//         }
-//     }
-
-//     FlattenedVec output = {values, n, m};
-//     return output;
-    
-// }
-
-FlattenedVec2 flatten_vector2(std::vector<std::vector<double>> original) {
-    int n = original.size();
-    int m = original.at(0).size();
-    
+FlattenedVec flatten_vector(std::vector<std::vector<double>> original) {
+    size_t n = original.size();
+    size_t m = original.at(0).size();
     rust::cxxbridge1::Vec<double> values = {};
     for (auto col: original) {
         for (auto i: col) {
             values.push_back(i);
         }
     }
-
-    FlattenedVec2 output = {values, n, m};
+    FlattenedVec output = {values, n, m};
     return output;
-    
 }
 
-FlattenedVec2 go(FlattenedVec2 shared_jl_cols) {
-
+FlattenedVec go(FlattenedVec shared_jl_cols) {
     int n = shared_jl_cols.num_cols;
     int m = shared_jl_cols.num_rows;
-
-    std::vector<std::vector<double>> jl_cols = unroll_vector2(shared_jl_cols);
-
+    std::vector<std::vector<double>> jl_cols = unroll_vector(shared_jl_cols);
     std::vector<std::vector<double>> solution(n, std::vector<double>(m, 0.0));
-
     run_solve(jl_cols, solution);
-
-    // for (auto col: solution) {
-    //     std::cout << col.at(0) << ", ";
-    //     auto check = col.at(0);
-    //     for (auto i: col){
-    //         assert(i != 0.0); //unsure this line is actually checking this. entering some value
-    //     }
-    // }
-    // std::cout << std::endl;
-
-    //std::vector<Shared> fake_sol = {Shared{1.0}, Shared{2.0}, Shared{3.0}};
-    //rust::cxxbridge1::Vec<Shared> fake_sol = {Shared{1.0}, Shared{2.0}, Shared{3.0}};
-
-    //FlattenedVec flat_solution = {fake_sol, SharedInt{1}, SharedInt{3}};
-    FlattenedVec2 flat_solution = flatten_vector2(solution);
-
+    FlattenedVec flat_solution = flatten_vector(solution);
     return flat_solution;
-
 }
 
-rust::Vec<size_t> no_sharing(rust::Vec<size_t> elements) {
-    std::vector<size_t> stdv;
-    std::copy(elements.begin(), elements.end(), std::back_inserter(stdv));
-
-    //increment_all_values(stdv);
-    for (auto i: stdv) {
-        std::cout << i << std::endl;
-        i++;
-    }
-
-    rust::Vec<size_t> output;
-    std::copy(stdv.begin(), stdv.end(), std::back_inserter(output));
-    return output;
+void sprs_test(rust::Vec<size_t> rust_col_ptrs, rust::Vec<size_t> rust_row_indices, rust::Vec<double> rust_values) {
+//void sprs_test(rust_col_ptrs: rust::Vec<size_t>, rust_row_indices: rust::Vec<size_t>, rust_values: rust::Vec<double>) {
+    std::vector<double> values;
+    std::copy(rust_values.begin(), rust_values.end(), std::back_inserter(values));
+    std::vector<size_t> col_ptrs;
+    std::copy(col_ptrs.begin(), col_ptrs.end(), std::back_inserter(rust_col_ptrs));
+    std::vector<size_t> row_indices;
+    std::copy(row_indices.begin(), row_indices.end(), std::back_inserter(rust_row_indices));
+    size_t num_rows = 3;
+    size_t num_cols = 3;
+    custom_space::sparse_matrix tester = custom_space::sparse_matrix(num_rows, num_cols, values, row_indices, col_ptrs);
 }

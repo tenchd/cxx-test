@@ -5,11 +5,11 @@
 #include "cxx-test/include/custom_cg.hpp"
 
 
-rust::Vec<Shared> f(rust::Vec<Shared> elements);
+//rust::Vec<Shared> f(rust::Vec<Shared> elements);
 
-FlattenedVec2 go(FlattenedVec2 shared_jl_cols);
+FlattenedVec go(FlattenedVec shared_jl_cols);
 
-rust::Vec<size_t> no_sharing(rust::Vec<size_t> elements);
+void sprs_test(rust::Vec<size_t> rust_col_ptrs, rust::Vec<size_t> rust_row_indices, rust::Vec<double> rust_values);
 
 /*
 void stupidconnorlalala() {
