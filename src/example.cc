@@ -877,15 +877,17 @@ rust::Vec<Shared> f(rust::Vec<Shared> v) {
 //void unroll_vector(FlattenedVec shared_jl_cols, std::vector<std::vector<double>> &jl_cols) {
 std::vector<std::vector<double>> unroll_vector(FlattenedVec shared_jl_cols) {
     
-    int n = shared_jl_cols.outer_length.v;
-    int m = shared_jl_cols.rows.v;
-    std::vector<std::vector<double>> jl_cols(m, std::vector<double>(n, 0.0));
-    auto num_rows = shared_jl_cols.outer_length.v;
+    int n = shared_jl_cols.num_cols.v;
+    int m = shared_jl_cols.num_rows.v;
+    
+    std::vector<std::vector<double>> jl_cols(n, std::vector<double>(m, 0.0));
+    
     int counter = 0;
     for (Shared s: shared_jl_cols.vec) {
-        int current_column = (int) counter / num_rows;
-        int current_row = counter % num_rows;
-        
+
+        int current_column = (int) counter / m;
+        int current_row = counter % m;
+        //printf("heh");
         jl_cols.at(current_column).at(current_row) = s.v;
 
         counter += 1;
@@ -893,48 +895,48 @@ std::vector<std::vector<double>> unroll_vector(FlattenedVec shared_jl_cols) {
     return jl_cols;
 }
 
-void go(FlattenedVec shared_jl_cols) {
+FlattenedVec flatten_vector(std::vector<std::vector<double>> original) {
+    int n = original.size();
+    int m = original.at(0).size();
+    
+    rust::cxxbridge1::Vec<Shared> values = {};
+    for (auto col: original) {
+        for (auto i: col) {
+            values.push_back(Shared{i});
+        }
+    }
 
-    // std::vector<Shared> stdv;
-    // std::copy(shared_jl_cols.vec.begin(), shared_jl_cols.vec.end(), std::back_inserter(stdv));
-    // assert(shared_jl_cols.vec.size() == stdv.size());
+    FlattenedVec output = {values, n, m};
+    return output;
+    
+}
 
-    // for (auto i: stdv) {
-    //     std::cout << i.v << ", ";
-    // }
+FlattenedVec go(FlattenedVec shared_jl_cols) {
 
-    // std::cout << std::endl << shared_jl_cols.outer_length.v << std::endl;
-
-    int n = shared_jl_cols.outer_length.v;
-    int m = shared_jl_cols.rows.v;
+    int n = shared_jl_cols.num_cols.v;
+    int m = shared_jl_cols.num_rows.v;
 
     std::vector<std::vector<double>> jl_cols = unroll_vector(shared_jl_cols);
 
-    std::vector<std::vector<double>> solution(m, std::vector<double>(n, 0.0));
-    //std::vector<std::vector<double>> jl_cols(m, std::vector<double>(n, 0.0));
+    std::vector<std::vector<double>> solution(n, std::vector<double>(m, 0.0));
 
     run_solve(jl_cols, solution);
 
-    // for (auto col: jl_cols) {
-    //     for (auto val: col) {
-    //         std::cout << val << ", ";
+    // for (auto col: solution) {
+    //     std::cout << col.at(0) << ", ";
+    //     auto check = col.at(0);
+    //     for (auto i: col){
+    //         assert(i != 0.0); //unsure this line is actually checking this. entering some value
     //     }
     // }
     // std::cout << std::endl;
 
-    for (auto col: solution) {
-        std::cout << col.at(0) << ", ";
-        auto check = col.at(0);
-        for (auto i: col){
-            assert(i != 0.0); //unsure this line is actually checking this. entering some value
-        }
-    }
-    std::cout << std::endl;
+    //std::vector<Shared> fake_sol = {Shared{1.0}, Shared{2.0}, Shared{3.0}};
+    //rust::cxxbridge1::Vec<Shared> fake_sol = {Shared{1.0}, Shared{2.0}, Shared{3.0}};
 
+    //FlattenedVec flat_solution = {fake_sol, SharedInt{1}, SharedInt{3}};
+    FlattenedVec flat_solution = flatten_vector(solution);
 
+    return flat_solution;
 
-    // for (auto shared: shared_jl_cols.vec) {
-    //     std::cout << shared.v << ", ";
-    // }
-    // std::cout << std::endl << shared_jl_cols.outer_length.v << std::endl;
 }

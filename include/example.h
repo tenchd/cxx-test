@@ -7,7 +7,7 @@
 
 rust::Vec<Shared> f(rust::Vec<Shared> elements);
 
-void go(FlattenedVec shared_jl_cols);
+FlattenedVec go(FlattenedVec shared_jl_cols);
 
 /*
 void stupidconnorlalala() {
