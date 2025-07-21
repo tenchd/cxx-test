@@ -9,6 +9,8 @@ rust::Vec<Shared> f(rust::Vec<Shared> elements);
 
 FlattenedVec go(FlattenedVec shared_jl_cols);
 
+rust::Vec<size_t> no_sharing(rust::Vec<size_t> elements);
+
 /*
 void stupidconnorlalala() {
     std::cout << "you are not stupid" << std::endl;

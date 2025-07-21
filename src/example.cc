@@ -940,3 +940,18 @@ FlattenedVec go(FlattenedVec shared_jl_cols) {
     return flat_solution;
 
 }
+
+rust::Vec<size_t> no_sharing(rust::Vec<size_t> elements) {
+    std::vector<size_t> stdv;
+    std::copy(elements.begin(), elements.end(), std::back_inserter(stdv));
+
+    //increment_all_values(stdv);
+    for (auto i: stdv) {
+        std::cout << i << std::endl;
+        i++;
+    }
+
+    rust::Vec<size_t> output;
+    std::copy(stdv.begin(), stdv.end(), std::back_inserter(output));
+    return output;
+}

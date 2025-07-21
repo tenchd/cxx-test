@@ -24,7 +24,7 @@ namespace custom_space {
         type_int num_cols;                   // Number of columns in the matrix
         std::vector<type_data> values;          // Non-zero values
         std::vector<type_int> row_indices; // Row indices for each non-zero value
-        std::vector<type_int> col_ptrs;    // Column pointers
+        std::vector<type_int> col_ptrs;    // Column a
 
         // Constructor to move data to it
         sparse_matrix(type_int numRows, type_int numCols, std::vector<type_data>&& input_values, 
