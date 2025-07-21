@@ -5,6 +5,10 @@ use cxx::Vector;
 
 use sprs::{CsMat};
 
+mod utils;
+
+use utils::read_mtx;
+
 //use crate::ffi::no_sharing;
 
 
@@ -107,4 +111,8 @@ fn main() {
     println!("row_indices in rust: {:?}", row_indices);
     println!("values in rust: {:?}", values);
     ffi::sprs_test(col_ptrs, row_indices, values);
+
+    read_mtx("data/cage3.mtx");
+    
+
 }
