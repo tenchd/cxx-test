@@ -428,7 +428,84 @@ class sparse_matrix_processor {
             
             
         }
+
+
+
         
+        //constructor for ffi csc vectors
+        sparse_matrix_processor(std::string name, type_int num_rows, type_int num_cols, \
+            std::vector<type_int>&& col_ptrs, std::vector<type_int>&& row_indices, std::vector<type_data>&& values) : name(name)
+        {
+            
+
+
+
+            mat = custom_space::sparse_matrix(num_rows, num_cols, std::move(values), std::move(row_indices), std::move(col_ptrs));
+
+            assert(mat.rows() == mat.cols());
+
+        
+            // Print the matrix
+            //std::cout << "Matrix:\n" << mat << "\n";
+
+            type_int n = mat.rows();
+            subtree_node_count.resize(n + 1, 0);
+            std::cout << "number of nodes: " << n << "\n";
+            std::cout << "number of nonzeros: " << mat.nonZeros() << "\n";
+            
+
+            // compute elimination tree
+            auto start = std::chrono::high_resolution_clock::now();
+            etree = build_elimination_tree(mat);
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> duration = end - start;
+            std::cout << "Time taken to build etree: " << duration.count() << " seconds" << std::endl;
+
+            // start = std::chrono::high_resolution_clock::now();
+            // etree = build_elimination_tree_slow(mat);
+            // end = std::chrono::high_resolution_clock::now();
+            // duration = end - start;
+            // std::cout << "Time taken to build etree (slow): " << duration.count() << " seconds" << std::endl;
+
+
+           // writeVectorToFile(etree, "etree.txt");
+
+            // compute factorization tree
+            start = std::chrono::high_resolution_clock::now();
+            ftree = create_factorization_tree_from_etree(etree);
+            end = std::chrono::high_resolution_clock::now();
+            duration = end - start;
+            std::cout << "Time taken to build factorization tree: " << duration.count() << " seconds" << std::endl;
+           // writeVectorOfVectorsToFile(ftree, "ftree.txt");
+
+            // generate layer element summary
+            // also gets subtree node count, has 1 extra space due to the dummy node at top of tree
+            start = std::chrono::high_resolution_clock::now();
+            layer_summary = layer_information(ftree);
+            end = std::chrono::high_resolution_clock::now();
+            duration = end - start;
+            std::cout << "Time taken to generate summary: " << duration.count() << " seconds" << std::endl;
+         
+            //writeVectorToFile(layer_summary, "layer_summary.txt");
+
+            // calculate minimum dependency
+            min_dependency_count.resize(n, 0);
+            count_minimum_dependencies(mat);
+
+             // print out summary
+            std::cout << "depth of tree (has 1 extra depth due to placeholder): " << layer_summary.size() << "\n";
+            type_int layer_sum = 0;
+            for (auto it = layer_summary.begin(); it != layer_summary.end(); ++it) {
+                layer_sum += *it;
+            }
+            assert(layer_sum - 1 == mat.rows());
+            
+            
+        }
+
+
+
+
 
        
         void writeVectorToFile(const std::vector<type_int>& vec, const std::string& filename) {
