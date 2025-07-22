@@ -40,23 +40,7 @@ mod ffi {
     }
 }
 
-// fn read_vecs_from_file(filename: String) -> Vec<Vec<ffi::Shared>>{
-//     let file = File::open(filename).unwrap();
-//     let reader = BufReader::new(file);
 
-//     let mut jl_cols: Vec<Vec<ffi::Shared>> = vec![];
-
-//     let column: usize = 0;
-//     for line in reader.lines() {
-//         let col: Vec<ffi::Shared> = line.expect("uh oh").split(",")
-//                                         .map(|x| x.trim().parse::<f64>().unwrap())
-//                                         .map(|v| ffi::Shared { v })
-//                                         .collect();
-//         println!("{}", col.len());
-//         jl_cols.push(col);
-//     }
-//     jl_cols
-// }
 
 fn read_vecs_from_file_flat(filename: String) -> ffi::FlattenedVec {
     let file = File::open(filename).unwrap();
@@ -86,10 +70,6 @@ fn read_vecs_from_file_flat(filename: String) -> ffi::FlattenedVec {
     jl_cols_flat
 }
 
-// fn print_type_of<T>(_: &T) {
-//     println!("{}", std::any::type_name::<T>());
-// }
-
 fn main() {
 
     let filename = "data/fake_jl_multi.csv".to_string();
@@ -98,31 +78,6 @@ fn main() {
     let m = shared_jl_cols_flat.num_cols;
     let n = shared_jl_cols_flat.num_rows;
 
-    // let shared = |v| ffi::Shared { v };
-    // let new_elements = vec![shared(3.0), shared(2.0), shared(1.0), shared(4.0)];
-
-    //let testvec = ffi::FlattenedVec {vec: new_elements, outer_length: ffi::SharedInt {v: 1},};
-
-    //let result = ffi::go(shared_jl_cols_flat);
-    
-    //println!("{}",result.vec[0]);
-
-
-
-    // let a = CsMat::new_csc((3, 3),
-    //                    vec![0, 2, 4, 5],
-    //                    vec![0, 1, 0, 2, 2],
-    //                    vec![1., 2., 3., 4., 5.]);
-
-    // let col_ptrs = a.indptr().as_slice().unwrap().to_vec();
-    // let row_indices = a.indices().to_vec();
-    // let values= a.data().to_vec();
-    // println!("col_ptrs in rust: {:?}", col_ptrs);
-    // println!("row_indices in rust: {:?}", row_indices);
-    // println!("values in rust: {:?}", values);
-    // ffi::sprs_test(col_ptrs, row_indices, values);
-
-    //read_mtx("data/cage3.mtx");
     let physics_csc = read_mtx("/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx");
     
     for i in physics_csc.diag_iter(){

@@ -5,11 +5,8 @@
 #include <iostream>
 #include <iterator>
 #include <vector>
-
 #include <chrono>
 #include <atomic>
-
-
 
 //MOST OF THIS FILE IS COPIED FROM DRIVER_LOCAL.CPP
 
@@ -42,7 +39,6 @@ void readVectorFromCSV(const std::string& filename, std::vector<type_int>& value
     }
 
     file.close();
-    //return floats;
 }
 
 template <typename type_int>
@@ -69,20 +65,15 @@ void readValuesFromFile(const std::string& filename, std::vector<std::vector<typ
                 throw std::runtime_error("Float value out of range: " + token);
             }
         }
-
         values.push_back(lineFloats);
     }
-
     file.close();
 }
-
-
 
 template <typename type_int>
 void writeVectorToFile(const std::vector<type_int>& vec, const std::string& filename) 
 {
     std::ofstream outFile(filename);
-    
     if (!outFile) {
         std::cerr << "Error opening file: " << filename << std::endl;
         return;
@@ -91,11 +82,8 @@ void writeVectorToFile(const std::vector<type_int>& vec, const std::string& file
     for (const type_int& element : vec) {
         outFile << element << "\n";
     }
-    
     outFile.close();
 }
-
-
 
 template <typename type_int, typename type_data>
 void perform_factorization_device(const custom_space::sparse_matrix<type_int, type_data> &spmat_device, type_int map_size,
@@ -104,19 +92,6 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
             type_int thread_id, type_int total_threads, int64_t *test_vec, int *schedule_id) 
 {
 
-    
-    // // set thread schedule affinity
-    // cpu_set_t cpuset;
-    // CPU_ZERO(&cpuset);
-    // CPU_SET(schedule_id[thread_id], &cpuset); // Assign thread to CPU corresponding to thread_num
-
-    // pthread_t thread = pthread_self();
-    // int ret = pthread_setaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
-
-
-
-    //int thread_id = omp_get_thread_num();
-    //int gap = omp_get_num_threads();
     int gap = total_threads;
     //printf("id: %d, cpu: %d, gap: %d\n", thread_id, sched_getcpu(), gap);
     std::random_device rd;
@@ -150,74 +125,28 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
         }
     }
 
-    
-
-
-    // skip num_cols - 1 since the last column is empty
-    //int static_id = 0;
-
-    
-
     while(queue_access_index < num_cols)
     {
-        //printf("queue_access_index = %d \n", queue_access_index);
-        
         if(job_id == -1)
         {
-         
-            
-            // if(queue_access_index < queue_size.load())
-            // {
-            //     std::atomic_ref<type_int> poll_id(queue_device[queue_access_index]);
-            //     job_id = poll_id.load();
-            //     // this means that even though the size was modified, the actual job haven't been inserted
-            //     if(job_id == 0 && queue_access_index != 0)
-            //     {
-                    
-            //         job_id = -1;
-            //     }
-                
-               
-            // }
             std::atomic_ref<type_int> poll_id(queue_device[queue_access_index]);
             
             // this means that even though the size was modified, the actual job haven't been inserted
             while(poll_id.load(std::memory_order_acquire) == 0 && queue_access_index != 0)
             {
-                
                 job_id = -1;
             }
             job_id = poll_id.load(std::memory_order_acquire);
-            // std::atomic_ref<int64_t> test_id(test_vec[queue_access_index]);
-            // if(test_id.load() == 0 && queue_access_index != 0)
-            // {
-            //     job_id = -1;
-            // }
-
-
-            // if (queue_access_index == queue_size.load())
-            // {
-            //     printf("job id: %d, queue_access_index: %d, queue_size.load(): %d\n", job_id, queue_access_index, queue_size.load());
-            //     exit(0);
-            // }
-                
-            // will keep skip until gets a valid id 
             neg_track++;
             continue;
         }
         positive_track++;
-      // job_id = static_id;
-      //  static_id++;
-        //curand_init(0, job_id, 0, &state);
-     
-    //printf("progress flag line 210 \n");
 
         // job successfully queued up, move to next search location
         queue_access_index += gap;
         // job id is the last column, skip
         if(job_id == num_cols - 1)
         {
-            
             std::atomic_ref<type_int> last_col_loc_ref(*device_output_position_idx);
             type_int last_col_loc = last_col_loc_ref.fetch_add(1);
 
@@ -225,51 +154,16 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
             device_node_list[num_cols - 1].count = 0;
             device_node_list[num_cols - 1].sum = 0.0;
         
-            
             job_id = -1;
             continue;
         }
-        
-        // if(job_id % 1000 == 0)
-        // {
-        //     printf("thread id: %d, cpu id: %d\n", omp_get_thread_num(), sched_getcpu());
-        // }
-
-        // check if column is ready for factorization
-        //cuda::atomic_ref<type_int, cuda::thread_scope_device> atomic_dependency_count(device_min_dependency_count[job_id]);
-        
 
         std::atomic_ref<type_int> atomic_dependency_count(device_min_dependency_count[job_id]);
-         
-        //cuda::atomic_ref<type_int, cuda::thread_scope_device> atomic_dependency_count(device_min_dependency_count[job_id]);
-
-        //printf("progress flag line 243 \n");
         
         while(atomic_dependency_count.load() > 0)
         {
-            
-           
             //continue;
         }
-
-        // if(job_id == 143800)
-        // {
-        //     type_int sum = 0;
-        //     for(type_int gg = 143801; gg < 334863; gg++)
-        //     {
-        //         sum += device_node_list[gg].count;
-        //     }
-        //     printf("fill: %d\n", sum);
-        //     //exit(0);
-        // }
-        
-
-        /* search for updates, get location information */ 
-        // if(sched_getcpu() != thread_id)
-        // {
-        //     printf("uh oh\n");
-        // }
-        
             
         type_int left_bound_idx = spmat_device.col_ptrs[job_id];
         type_int num_of_original_nnz = spmat_device.col_ptrs[job_id + 1] - left_bound_idx;
@@ -289,20 +183,8 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
             continue;
         }
 
-        //printf("progress flag line 289 \n");
-        // printf("total neighbor at job id %d: %d, device node prev: %d\n", job_id, total_neighbor_count, device_node_list[job_id].prev);
-       
         {
-           
-            /* perform merging */
-            //type_int edge_start = output_start_array[0];
-            
-
             type_int edge_start = 0;
-
-         
-           
-           
 
             // 1. read in the nonzeros in the original input and sort entire input first based on row value
             if(edge_start + total_neighbor_count >= local_work_space_vec.size())
@@ -315,23 +197,12 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
             {
                 local_work_space[i] = Edge<type_int, type_data>(spmat_device.row_indices[left_bound_idx + i - edge_start - update_neighbor_count], 
                     spmat_device.values[left_bound_idx + i - edge_start - update_neighbor_count], 1);
-
             }
-         
 
             //odd_even_sort(device_factorization_output, edge_start, edge_start + total_neighbor_count, lane_id, compare_row);
             std::sort(local_work_space + edge_start, local_work_space + edge_start + total_neighbor_count, [](const Edge<type_int, type_data>& a, const Edge<type_int, type_data>& b) {
                 return a.row < b.row;
             });
-
-
-            // if(job_id == 314)
-            // {
-            //     printf("total neighbor: %d, update_neighbor_count: %d\n", total_neighbor_count, update_neighbor_count);
-            //     assert(false);
-            // }
-            
-              
    
             // 3. merge entries with the same row value
             // count how many actual distinct elements there are after merging
@@ -358,28 +229,18 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
                         edge_ref->multiplicity = local_work_space[i].multiplicity;
                         edge_ref->row = local_work_space[i].row;
                     }
-                    
                 }
             }
-          
-
-            //printf("progress flag line 363 \n");
-            
             
             // update device_node_list with new locations after merging and update values after merging
             device_node_list[job_id].count = actual_neighbor_count;
             total_neighbor_count = actual_neighbor_count;
-
 
             // 5. sort input based on value
             //odd_even_sort(device_factorization_output, edge_start, edge_start + total_neighbor_count, lane_id, compare_value);
             std::sort(local_work_space + edge_start, local_work_space + edge_start + total_neighbor_count, [](const Edge<type_int, type_data>& a, const Edge<type_int, type_data>& b) {
                 return a.value < b.value;
             });
-        
-            
-            //printf("progress flag line 378 \n");
-             
             
             // compute cumulative sum
             type_data total_sum = 0.0;
@@ -394,8 +255,6 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
                 }
             }
             device_node_list[job_id].sum = total_sum;
-            
-            //printf("progress flag line 395 \n");
 
             /* Generate Samples and set up links */
             for(type_int i = edge_start; i < edge_start + total_neighbor_count - 1; i++)
@@ -414,7 +273,6 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
                 local_work_space[i].sampled_value = generated_value;
 
                 // atomically update the link, must use atomics here
-                
                 std::atomic_ref<int64_t> link_ref(device_node_list[generated_col].prev);
                 local_work_space[i].prev = link_ref.exchange(i + output_start_array[0]);
 
@@ -425,92 +283,42 @@ void perform_factorization_device(const custom_space::sparse_matrix<type_int, ty
                 // add dependency update
                 std::atomic_ref<type_int> dependency_update(device_min_dependency_count[generated_row]);
                 dependency_update.fetch_add(1);
-                // if(job_id == 37969)
-                // {
-                //     printf("sampled row: %d, generated col: %d, job id: %d, value: %f, row of loop: %d\n", generated_row, generated_col, job_id, local_work_space[i].value, local_work_space[i].row);
-                // }
-
-
             }
-
-            //printf("progress flag line 433 \n");
 
             // scale by total sum
             for(type_int i = edge_start; i < edge_start + total_neighbor_count; i++)
             {
                 local_work_space[i].value = local_work_space[i].value / total_sum;
-
             }
                 
-            
             // copy to global space
             for(type_int i = edge_start; i < edge_start + total_neighbor_count; i++)
             {
                 device_edge_map[i + output_start_array[0]] = local_work_space[i]; 
-            }
-
-            
+            }            
 
             // update dependency by subtracting away from ones impacted by current node/column
-       
-          
             for(type_int i = edge_start + output_start_array[0]; i < edge_start + total_neighbor_count + output_start_array[0]; i++)
             {
-                
-
-                
-                //type_int old_dependency = atomicAdd(&device_min_dependency_count[device_factorization_output[i].row], -(type_int)(device_factorization_output[i].multiplicity));
                 std::atomic_ref<type_int> dependency_ref(device_min_dependency_count[device_edge_map[i].row]);
                 type_int old_dependency = dependency_ref.fetch_sub(device_edge_map[i].multiplicity);
-                //cuda::atomic_ref<type_int, cuda::thread_scope_device> dependency_sync(device_min_dependency_count[device_factorization_output[i].row]);
-                //type_int old_dependency = dependency_sync.fetch_sub(device_factorization_output[i].multiplicity, cuda::memory_order_release);
-                //printf("job id: %d, row: %d, old_dependency: %d, multiplicity: %d\n", job_id, device_edge_map[i].row, old_dependency, device_edge_map[i].multiplicity);
+
                 if(old_dependency == device_edge_map[i].multiplicity)
                 {
-
                    type_int old_queue_size = queue_size.fetch_add(1);
                     //queue_size = atomicAdd(&queue_device[num_cols], 1);
                    std::atomic_ref<type_int> job_schedule_ref(queue_device[old_queue_size]);
                    job_schedule_ref.exchange(device_edge_map[i].row, std::memory_order_release);
-                    // #pragma omp capture
-                    // {
-                    //     type_int old_val = queue_device[old_queue_size];
-                    //     queue_device[old_queue_size] = device_edge_map[i].row;
-                    // }
-                    
-                    // int64_t old_test_size = test_size.fetch_add(1);
-                    // std::atomic_ref<int64_t> test_ref(test_vec[old_test_size]);
-                    // test_ref.exchange(device_edge_map[i].row);
-                    //atomicExch(&queue_device[queue_size], device_factorization_output[i].row);
-     
                 }
-
-    
-                
-                
             }
-            
-       
-      
-            
-
         }
 
         // reset job id to -1, so it will look for a new job
         job_id = -1;
-      
     }
-
     
     auto end = std::chrono::steady_clock::now();
     std::chrono::duration<double> duration = end - start;
-
-    // printf("id: %d, cpu: %d, negative track: %d, positive track: %d, time: %f\n", thread_id, sched_getcpu(), 
-    //     neg_track, positive_track, duration.count());
-
-
-    
-    
 }
 
 bool compare(const Edge<int, double> &a, const Edge<int, double> &b)
@@ -518,11 +326,9 @@ bool compare(const Edge<int, double> &a, const Edge<int, double> &b)
     return a.row < b.row;  
 };
 
-
 template <typename type_int, typename type_data>
 void factorization_driver(sparse_matrix_processor<type_int, type_data> &processor, type_int num_threads, char* path, bool is_graph, \
     std::vector<std::vector<type_data>>& jl_cols, std::vector<std::vector<type_data>>& solution)
-//void factorization_driver(sparse_matrix_processor<type_int, type_data> &processor, type_int num_threads, char* path, bool is_graph)
 {
     assert(INT_MAX == 2147483647);
     int space_multiply_factor = 5;
@@ -539,19 +345,13 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
     Edge<type_int, type_data> *host_edge_map = (Edge<type_int, type_data> *)malloc(edge_pool_size * sizeof(Edge<type_int, type_data>{}));
     for(size_t i = 0; i < edge_pool_size; i++) 
     {
-        
         host_edge_map[i] = Edge<type_int, type_data>();
     }
     
-
     type_int host_output_position_idx = 0;
 
-
-
-    
     // copy sparse matrix from cpu to gpu
     custom_space::sparse_matrix<type_int, type_data> spmat = processor.make_lower_triangular(processor.mat);
-
 
     // copy min_dependency_array
     if(spmat.num_cols != processor.min_dependency_count.size())
@@ -560,36 +360,26 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
         assert(spmat.num_cols == processor.min_dependency_count.size());
     }
     
-    //printf("dependency count at 5: %d\n", processor.min_dependency_count[5]);
     std::vector<type_int> queue_cpu(spmat.num_cols + 2, 0); // last two element represent counters
     std::vector<int64_t> test_vec(spmat.num_cols + 1, 0);
     
     for(type_int i = 0; i < processor.min_dependency_count.size(); i++)
     {
-        
         if(processor.min_dependency_count[i] == 0)
         {
             queue_cpu[queue_cpu[queue_cpu.size() - 2]] = i;
             queue_cpu[queue_cpu.size() - 2]++;
-            //printf("scheduled: %d\n", i);
 
             test_vec[test_vec[test_vec.size() - 1]] = i;
             test_vec[test_vec.size() - 1]++;
        }
-    
-        
     }
-    // std::random_device rd;
-    // std::mt19937 generator(rd());
 
-    //std::shuffle(queue_cpu.begin() + 1, queue_cpu.begin() + 10626424, generator);
     assert(queue_cpu[0] == 0);
     printf("initial queue size: %d\n", queue_cpu[queue_cpu.size() - 2]);
 
     std::vector<type_int> min_dependency_count = processor.min_dependency_count;
 
-    
-    
     // create node array
     std::vector<Node<type_int, type_data>> node_list_host(spmat.num_cols);
     for(size_t i = 0; i < spmat.num_cols; i++)
@@ -597,32 +387,19 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
         node_list_host[i] = Node<type_int, type_data>(0, 0, i);
     }
   
-
     printf("CURRENTLY, MULTIPLICITY STORAGE USES INT32, DON'T NEED 64 BIT UNLESS IN EXTREME CIRCUMSTANCES \n");
     printf("CURRENTLY, BINARY SEARCH USES INT32, DON'T NEED 64 BIT UNLESS IN EXTREME CIRCUMSTANCES \n");
     printf("defaulting row and col to 0 in map may cause problem for column 0 \n");
     
-
-   
-    //int schedule_id[] = {0, 128, 1, 129, 2, 130, 3, 131, 4, 132, 5, 133, 6, 134, 7, 135};
     int schedule_id[] = {0, 128, 1, 129, 2, 130, 3, 131, 4, 132, 5, 133, 6, 134, 7, 135, 8, 136, 9, 137, 10, 138, 11, 139, 12, 140, 13, 141, 14, 142, 15, 143};
-    //int schedule_id[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
     
     omp_set_num_threads(num_threads);
-    //kmp_set_defaults("KMP_AFFINITY=norespect|KMP_SETTINGS=1");
 
     // Parallel region starts
     #pragma omp parallel
     {
         auto start = std::chrono::steady_clock::now();
-        
-        // cpu_set_t cpuset;
-        // CPU_ZERO(&cpuset);
-        // CPU_SET(omp_get_thread_num(), &cpuset); // Assign thread to CPU corresponding to thread_num
 
-        // pthread_t thread = pthread_self();
-        // int ret = pthread_setaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
-        // printf("thread id: %d, cpu id: %d\n", omp_get_thread_num(), sched_getcpu());
         perform_factorization_device<type_int, type_data>(spmat, edge_pool_size, host_edge_map, edge_pool_size, min_dependency_count.data(), node_list_host.data(), 
             &host_output_position_idx, queue_cpu.data(), omp_get_thread_num(), num_threads, test_vec.data(), schedule_id);
         auto end = std::chrono::steady_clock::now();
@@ -651,16 +428,6 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
 
         // sort list and compute sum, also negate entries since the factorization was done with positive entries
         type_int col_start = node_list_host[i].start;
-        //printf("col_start: %d, col_size: %d\n", col_start, node_list_host[i].count + 1);
-        // if(i > 0)
-        // {
-        //     if(col_start < node_list_host[i - 1].start + node_list_host[i - 1].count)
-        //     {
-        //         printf("i - 1: %d, prev col start: %d, prev count: %d, cur start: %d\n", i - 1, node_list_host[i - 1].start, node_list_host[i - 1].count, col_start);
-        //         assert(col_start > node_list_host[i - 1].start + node_list_host[i - 1].count);
-        //     }
-            
-        // }
     
         // compute column sum and append diagonal, negate entries
         for(size_t j = col_start; j < col_start + node_list_host[i].count; j++)
@@ -671,27 +438,8 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
 
         // UPDATE COUNT
         host_edge_map[col_start + node_list_host[i].count] = Edge<type_int, type_data>(i, 1.0, 1);
-        //Output<type_int, type_data>(i, 1.0, 1);
-        // if(i == 40089)
-        // {
-        //     printf("insert for %ld at: %d\n", i, col_start);
-        //     // printf("output row: %d\n", device_factorization_output_host[col_start + node_list_host[i].count].row);
-        //     for(int j = col_start; j < col_start + node_list_host[i].count + 1; j++)
-        //     {
-        //         printf("output row: %d, val: %f\n", device_factorization_output_host[j].row, device_factorization_output_host[j].value);
-        //     }
-        // }
         node_list_host[i].count++;
         std::sort(host_edge_map + col_start, host_edge_map + col_start + node_list_host[i].count, compare);
-        // if(true)
-        // {
-        //     printf("insert for 0 at: %d\n", node_list_host[i].count);
-        //     // printf("output row: %d\n", device_factorization_output_host[col_start + node_list_host[i].count].row);
-        //     for(int j = col_start; j < col_start + node_list_host[i].count; j++)
-        //     {
-        //         printf("after output row: %d\n", device_factorization_output_host[j].row);
-        //     }
-        // }
     }
     
     printf("nnz ratio: %f, factor nnz: %d, original lower triangular nnz (exclude diagonal): %d\n", double(total_needed_size) / double(spmat.nonZeros()), total_needed_size, spmat.nonZeros());
@@ -804,8 +552,6 @@ void factorization_driver(sparse_matrix_processor<type_int, type_data> &processo
     }
 
 }
-
-
 //END COPIED CODE
 
 // MODIFIED FROM DRIVER_LOCAL.CPP MAIN FILE
@@ -921,7 +667,7 @@ void sprs_correctness_test(rust::Vec<custom_idx> rust_col_ptrs, rust::Vec<custom
 }
 
 
-// //VERY BROKEN test function that runs the solver code on rust-provided sparse matrix.
+// function that runs the solver code on rust-provided laplacian and jl sketch.
 FlattenedVec run_solve_lap(FlattenedVec shared_jl_cols, rust::Vec<custom_idx> rust_col_ptrs, \
     rust::Vec<custom_idx> rust_row_indices, rust::Vec<double> rust_values) {
 

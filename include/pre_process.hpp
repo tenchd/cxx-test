@@ -209,8 +209,6 @@ class sparse_matrix_processor {
             }
         }
 
-
-
         // add the diagonal entries to the end, will be in correct location after sort
         if(add_diagonal)
         {
@@ -237,15 +235,11 @@ class sparse_matrix_processor {
             printf("didn't went into add_diagonal code\n");
         }
        
-
-        
-        
         // Create an index vector to store the initial indices
         std::vector<size_t> indices(rows.size());
         for (size_t i = 0; i < indices.size(); ++i) {
             indices[i] = i;
         }
-
 
         // Sort the indices based on the column and row values
         std::sort(indices.begin(), indices.end(), [&](size_t a, size_t b) {
@@ -262,11 +256,7 @@ class sparse_matrix_processor {
             sorted_rows[i] = rows[indices[i]];
             sorted_cols[i] = cols[indices[i]];
             sorted_values[i] = values[indices[i]];
-           
-
         }
-
-        
 
         // Assign sorted vectors back to original vectors
         rows = std::move(sorted_rows);
@@ -274,9 +264,7 @@ class sparse_matrix_processor {
         values = std::move(sorted_values);
     }
 
-
     // Function to convert separate row, column, and value vectors to CSC format
-
     custom_space::sparse_matrix<type_int, type_data> triplet_to_csc_with_diagonal(type_int numRows, type_int numCols,
                             const std::vector<type_int>& rows,
                             const std::vector<type_int>& cols,
@@ -319,8 +307,6 @@ class sparse_matrix_processor {
     }
 
     public:
-
-        
         std::string name; // Member variable
         custom_space::sparse_matrix<type_int, type_data> mat; // Define a sparse matrix
         std::vector<type_int> etree;
@@ -329,13 +315,9 @@ class sparse_matrix_processor {
         std::vector<type_int> subtree_node_count;
         std::vector<type_int> min_dependency_count;
       
-
-    
         // Constructor
         sparse_matrix_processor(const std::string& name) : name(name)
         {
-            
-
             // Load the matrix from file
             std::string path = "";
             std::ifstream input_stream(path + name);
@@ -359,21 +341,15 @@ class sparse_matrix_processor {
             
             sort_triplets_append_diagonal(input_triplet.rows, input_triplet.cols, input_triplet.vals, input_triplet.ncols, add_diagonal);
 
-
             // Assert that triplets are sorted
             assert_sorted_triplets(input_triplet.rows, input_triplet.cols);
 
             // make sure it's a square matrix (i.e. legitimate graph)
             
-
             mat = triplet_to_csc_with_diagonal(input_triplet.nrows, input_triplet.ncols, input_triplet.rows, input_triplet.cols, input_triplet.vals);
 
             assert(mat.rows() == mat.cols());
 
-        
-            // Print the matrix
-            //std::cout << "Matrix:\n" << mat << "\n";
-
             type_int n = mat.rows();
             subtree_node_count.resize(n + 1, 0);
             std::cout << "number of nodes: " << n << "\n";
@@ -387,22 +363,12 @@ class sparse_matrix_processor {
             std::chrono::duration<double> duration = end - start;
             std::cout << "Time taken to build etree: " << duration.count() << " seconds" << std::endl;
 
-            // start = std::chrono::high_resolution_clock::now();
-            // etree = build_elimination_tree_slow(mat);
-            // end = std::chrono::high_resolution_clock::now();
-            // duration = end - start;
-            // std::cout << "Time taken to build etree (slow): " << duration.count() << " seconds" << std::endl;
-
-
-           // writeVectorToFile(etree, "etree.txt");
-
             // compute factorization tree
             start = std::chrono::high_resolution_clock::now();
             ftree = create_factorization_tree_from_etree(etree);
             end = std::chrono::high_resolution_clock::now();
             duration = end - start;
             std::cout << "Time taken to build factorization tree: " << duration.count() << " seconds" << std::endl;
-           // writeVectorOfVectorsToFile(ftree, "ftree.txt");
 
             // generate layer element summary
             // also gets subtree node count, has 1 extra space due to the dummy node at top of tree
@@ -411,8 +377,6 @@ class sparse_matrix_processor {
             end = std::chrono::high_resolution_clock::now();
             duration = end - start;
             std::cout << "Time taken to generate summary: " << duration.count() << " seconds" << std::endl;
-         
-            //writeVectorToFile(layer_summary, "layer_summary.txt");
 
             // calculate minimum dependency
             min_dependency_count.resize(n, 0);
@@ -424,32 +388,20 @@ class sparse_matrix_processor {
             for (auto it = layer_summary.begin(); it != layer_summary.end(); ++it) {
                 layer_sum += *it;
             }
-            assert(layer_sum - 1 == mat.rows());
-            
-            
+            assert(layer_sum - 1 == mat.rows());  
         }
 
-
-
-        
         //constructor for ffi csc vectors
         sparse_matrix_processor(std::string name, type_int num_rows, type_int num_cols, \
             std::vector<type_int>&& col_ptrs, std::vector<type_int>&& row_indices, std::vector<type_data>&& values) : name(name)
         {
-
             mat = custom_space::sparse_matrix(num_rows, num_cols, std::move(values), std::move(row_indices), std::move(col_ptrs));
-
             assert(mat.rows() == mat.cols());
-
-        
-            // Print the matrix
-            //std::cout << "Matrix:\n" << mat << "\n";
 
             type_int n = mat.rows();
             subtree_node_count.resize(n + 1, 0);
             std::cout << "number of nodes: " << n << "\n";
             std::cout << "number of nonzeros: " << mat.nonZeros() << "\n";
-            
 
             // compute elimination tree
             auto start = std::chrono::high_resolution_clock::now();
@@ -458,22 +410,12 @@ class sparse_matrix_processor {
             std::chrono::duration<double> duration = end - start;
             std::cout << "Time taken to build etree: " << duration.count() << " seconds" << std::endl;
 
-            // start = std::chrono::high_resolution_clock::now();
-            // etree = build_elimination_tree_slow(mat);
-            // end = std::chrono::high_resolution_clock::now();
-            // duration = end - start;
-            // std::cout << "Time taken to build etree (slow): " << duration.count() << " seconds" << std::endl;
-
-
-           // writeVectorToFile(etree, "etree.txt");
-
             // compute factorization tree
             start = std::chrono::high_resolution_clock::now();
             ftree = create_factorization_tree_from_etree(etree);
             end = std::chrono::high_resolution_clock::now();
             duration = end - start;
             std::cout << "Time taken to build factorization tree: " << duration.count() << " seconds" << std::endl;
-           // writeVectorOfVectorsToFile(ftree, "ftree.txt");
 
             // generate layer element summary
             // also gets subtree node count, has 1 extra space due to the dummy node at top of tree
@@ -482,8 +424,6 @@ class sparse_matrix_processor {
             end = std::chrono::high_resolution_clock::now();
             duration = end - start;
             std::cout << "Time taken to generate summary: " << duration.count() << " seconds" << std::endl;
-         
-            //writeVectorToFile(layer_summary, "layer_summary.txt");
 
             // calculate minimum dependency
             min_dependency_count.resize(n, 0);
@@ -496,15 +436,8 @@ class sparse_matrix_processor {
                 layer_sum += *it;
             }
             assert(layer_sum - 1 == mat.rows());
-            
-            
         }
 
-
-
-
-
-       
         void writeVectorToFile(const std::vector<type_int>& vec, const std::string& filename) {
             std::ofstream outFile(filename);
             
@@ -550,13 +483,11 @@ class sparse_matrix_processor {
         }
 
         // Function to print a list of lists (vector of vectors)
-
         void printListOfLists(const std::vector<std::vector<type_int>>& listOfLists) {
             for (const auto& list : listOfLists) {
                 printVector(list);
             }
         }
-
 
         void count_minimum_dependencies(const custom_space::sparse_matrix<type_int, type_data>& matrix) 
         {
@@ -570,20 +501,12 @@ class sparse_matrix_processor {
                     continue;
                 }
 
-                
                 for (; it && it.row() < k; ++it) 
                 {
-                    
                    min_dependency_count[k]++;
-                    
                 }
-
-               
             }
         }
-
-
-
 
         std::vector<type_int> build_elimination_tree(const custom_space::sparse_matrix<type_int, type_data>& matrix) 
         {
@@ -611,10 +534,8 @@ class sparse_matrix_processor {
                     continue;
                 }
 
-                
                 for (; it && it.row() < k; ++it) 
                 {
-                    
                     if (list_location[it.row()] == -1)
                     {
                         std::vector<type_int> temp;
@@ -634,19 +555,15 @@ class sparse_matrix_processor {
                     }
                     actual_location.push_back(idx);
 
-
                     // update the dynamic connection so it's connecting to the newest
                     type_int latest_path_idx = idx;
                     idx = list_location[it.row()];
                     while(dynamic_path_connection[idx] != idx)
                     {
-                        
                         type_int temp = dynamic_path_connection[idx];
                         dynamic_path_connection[idx] = latest_path_idx;
                         idx = temp;
                     }
-
-                    
                 }
 
                 bool same_path = true;
@@ -666,7 +583,6 @@ class sparse_matrix_processor {
                     path_connection.push_back(idx);
                     dynamic_path_connection.push_back(idx);
                     list_location[k] = idx;
-            
 
                     for(type_int i = 0; i < actual_location.size(); i++)
                     {
@@ -680,8 +596,6 @@ class sparse_matrix_processor {
                     list_location[k] = reference;
                 }
             
-
-
                 actual_location.clear();
             }
 
@@ -699,7 +613,6 @@ class sparse_matrix_processor {
                     tree[cur_list[cur_list.size() - 1]] = 0;
             }
 
-
             std::cout << "num linear paths: " << path_list.size() << "\n";
             double sum = 0;
             for(int i = 0; i < path_list.size(); i++)
@@ -707,11 +620,8 @@ class sparse_matrix_processor {
                 sum += path_list[i].size();
             }
             std::cout << "average per path: " << sum / path_list.size() << "\n";
-
             return tree;
-
         }
-
 
         std::vector<type_int> build_elimination_tree_slow(const custom_space::sparse_matrix<type_int, type_data>& matrix) 
         {
@@ -719,7 +629,6 @@ class sparse_matrix_processor {
             then track down those paths and insert the new node in. This inductively creates the step n graph. */
             
             std::vector<type_int> tree(matrix.rows(), 0);
-
 
             for (type_int k = 0; k < matrix.outerSize(); ++k) 
             {
@@ -742,12 +651,8 @@ class sparse_matrix_processor {
                 }
         
             }
-
             return tree;
-
         }
-
-
 
         // index 0 of factorization tree is the root node location
         std::vector<std::vector<type_int>> create_factorization_tree_from_etree(const std::vector<type_int> &etree) 
@@ -761,7 +666,6 @@ class sparse_matrix_processor {
             factorization_tree[0].clear();
 
             return factorization_tree;
-
         }
 
         /* return a vector where the index corresponds to the depth and the value correspond to the number 
@@ -780,7 +684,6 @@ class sparse_matrix_processor {
 
             while(!stack.empty())
             {
-
                 type_int index = stack.top();
                 type_int cur_depth = depth.top();
                 post_order.push(index);
@@ -804,7 +707,6 @@ class sparse_matrix_processor {
                     stack.push(*it);
                     depth.push(cur_depth + 1);
                 }
-            
             }
 
             // use post order to calculate the total number of nodes in each subtree
@@ -822,9 +724,7 @@ class sparse_matrix_processor {
                 }
                 subtree_node_count[index] = node_sum;
             }
-
             return nodes_per_layer;
-
         }
 
         // create a lower triangular matrix out of the original input, doesn't preserve diagonal
@@ -852,13 +752,11 @@ class sparse_matrix_processor {
                 // count number of lower triangular component
                 type_int count = 0;
                 for (; it; ++it) 
-                {
-                    
+                { 
                     if(it.row() > k)
                     {
                         count++;
                     }
-                    
                 }
                 col_ptrs[k + 1] = col_ptrs[k] + count;
             }
@@ -868,7 +766,6 @@ class sparse_matrix_processor {
 
             for (type_int k = 0; k < matrix.outerSize(); ++k) 
             {
-  
                 typename custom_space::sparse_matrix<type_int, type_data>::InnerIterator it(matrix, k);
                 // if empty column
                 if (!it)
@@ -879,13 +776,8 @@ class sparse_matrix_processor {
                 type_int count = 0;
                 for (; it; ++it) 
                 {
-                    
                     if(it.row() > k)
                     {
-                        // if(k == 314)
-                        // {
-                        //     printf("value read: %f, row: %d\n", it.value(), it.row());
-                        // }
                         // write the entries, make sure to set to positive to make factorization more convenient
                         if(it.value() == 0 && announce == 0)
                         {
@@ -915,8 +807,4 @@ class sparse_matrix_processor {
 
             return ret;
         }
-
-
-
-    
 };
