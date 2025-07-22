@@ -5,7 +5,7 @@ use sprs::{CsMat};
 extern crate fasthash;
 
 mod utils;
-use utils::read_mtx;
+use utils::{read_mtx, write_mtx};
 
 mod jl_sketch;
 use jl_sketch::{jl_sketch_sparse,jl_sketch_sparse_blocked};
@@ -67,10 +67,11 @@ fn read_vecs_from_file_flat(filename: &str) -> FlattenedVec {
 
 
 // currently assumes that you don't need to manage diagonals of input matrix. fix this later
-fn precondition_and_solve(input_filename: &str, sketch_filename: &str, seed: u64, jl_factor: f64, jl_dim: usize, block_rows: usize, block_cols: usize, display:bool) -> FlattenedVec {
+fn precondition_and_solve(input_filename: &str, sketch_filename: &str, seed: u64, jl_factor: f64, block_rows: usize, block_cols: usize, display:bool) -> FlattenedVec {
     //let filename = "data/fake_jl_multi.csv".to_string();
 
     let input_csc = read_mtx(input_filename);
+    println!("{}", input_csc.outer_dims());
 
     //make sure diagonals are nonzero; generalize this later
     for i in input_csc.diag_iter(){
@@ -80,15 +81,17 @@ fn precondition_and_solve(input_filename: &str, sketch_filename: &str, seed: u64
     let n: usize = input_csc.cols();
     let m: usize = input_csc.rows();
 
-    let seed: u64 = 1;
-    let jl_factor: f64 = 1.5;
+    //let seed: u64 = 1;
+    //let jl_factor: f64 = 1.5;
     let jl_dim = ((n as f64).log2() *jl_factor).ceil() as usize;
     println!("output matrix is {}x{}", n, jl_dim);
 
-    // not use at the moment; need to convert it to flattenedvec so i can pass it to c++. try the to_dense function maybe?
-    let mut sketch_sparse_format: CsMat<f64> = CsMat::zero((jl_dim,n)).transpose_into();
+    // not used at the moment; need to convert it to flattenedvec so i can pass it to c++. try the to_dense function maybe?
+    //let mut sketch_sparse_format: CsMat<f64> = CsMat::zero((jl_dim,n)).transpose_into();
+    //println!("{}", sketch_sparse_format.outer_dims());
 
-    jl_sketch_sparse_blocked(&input_csc, &mut sketch_sparse_format, jl_dim, seed, block_rows, block_cols, display);
+    //jl_sketch_sparse_blocked(&input_csc, &mut sketch_sparse_format, jl_dim, seed, block_rows, block_cols, display);
+    //write_mtx("real_jl_sketch", &sketch_sparse_format);
     
     let shared_jl_cols_flat = read_vecs_from_file_flat(sketch_filename);
     let m = shared_jl_cols_flat.num_cols;
@@ -114,16 +117,14 @@ fn main() {
 
     let seed: u64 = 1;
     let jl_factor: f64 = 1.5;
-    let jl_dim = ((n as f64).log2() *jl_factor).ceil() as usize;
     let block_rows: usize = 100;
     let block_cols: usize = 15000;
     let display: bool = false;
-    println!("output matrix is {}x{}", n, jl_dim);
 
     let sketch_filename = "data/fake_jl_multi.csv";
     let input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
 
-    let solution = precondition_and_solve(input_filename, sketch_filename);
+    let solution = precondition_and_solve(input_filename, sketch_filename, seed, jl_factor, block_rows, block_cols, display);
 
     println!("solution has {} cols, {} rows, and initial value {}", solution.num_cols, solution.num_rows, solution.vec[0]);
 
