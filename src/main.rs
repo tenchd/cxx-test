@@ -33,9 +33,9 @@ mod ffi {
 
         fn sprs_test(col_ptrs: Vec<usize>, row_indices: Vec<usize>, values: Vec<f64>);
 
-        fn sprs_correctness_test(col_ptrs: Vec<usize>, row_indices: Vec<usize>, values: Vec<f64>);
+        fn sprs_correctness_test(col_ptrs: Vec<i32>, row_indices: Vec<i32>, values: Vec<f64>);
 
-        //fn run_solve_lap(shared_jl_cols: FlattenedVec, rust_col_ptrs: Vec<u64>, rust_row_indices: Vec<u64>, rust_values: Vec<f64>) -> FlattenedVec;
+        fn run_solve_lap(shared_jl_cols: FlattenedVec, rust_col_ptrs: Vec<i32>, rust_row_indices: Vec<i32>, rust_values: Vec<f64>) -> FlattenedVec;
 
     }
 }
@@ -129,17 +129,17 @@ fn main() {
         assert!(*i.unwrap() != 0.0 as f64)
     }
 
-    let phys_col_ptrs = physics_csc.indptr().as_slice().unwrap().to_vec();
-    //let phys_col_ptrs: Vec<u64> = temp_phys_col_ptrs.into_iter().map(|x| x as u64).collect();
-    let phys_row_indices = physics_csc.indices().to_vec();
-    //let phys_row_indices: Vec<u64> = temp_phys_row_indices.into_iter().map(|x| x as u64).collect();
+    let temp_phys_col_ptrs = physics_csc.indptr().as_slice().unwrap().to_vec();
+    let phys_col_ptrs: Vec<i32> = temp_phys_col_ptrs.into_iter().map(|x| x as i32).collect();
+    let temp_phys_row_indices = physics_csc.indices().to_vec();
+    let phys_row_indices: Vec<i32> = temp_phys_row_indices.into_iter().map(|x| x as i32).collect();
     let phys_values = physics_csc.data().to_vec();
     //let phys_values = temp_phys_values.into_iter().map(|x| x as u64).collect();
     println!("phys col_ptrs size in rust: {:?}. first value: {}", phys_col_ptrs.len(), phys_col_ptrs[0]);
     println!("phys row_indices size in rust: {:?}. first value: {}", phys_row_indices.len(), phys_row_indices[0]);
     println!("phys values size in rust: {:?}. first value: {}", phys_values.len(), phys_values[0]);
     println!("nodes in phys csc: {}, {}", physics_csc.cols(), physics_csc.rows());
-    ffi::sprs_correctness_test(phys_col_ptrs, phys_row_indices, phys_values);
-    //ffi::run_solve_lap(shared_jl_cols_flat, phys_col_ptrs, phys_row_indices, phys_values);
+    //ffi::sprs_correctness_test(phys_col_ptrs, phys_row_indices, phys_values);
+    ffi::run_solve_lap(shared_jl_cols_flat, phys_col_ptrs, phys_row_indices, phys_values);
 
 }

@@ -11,6 +11,7 @@ fn main() {
 //        .flags(["-O3", "-fopenmp", "-L", "-lm", "-lmkl_intel_lp64", "-lmkl_intel_thread", "-lmkl_core", "-liomp5", "-lpthread"])
         .flag("-O3")
         .flag("-fopenmp")
+        .flag("-w")
 //        .flag("-g")
         .compile("cxxbridge-test");
 

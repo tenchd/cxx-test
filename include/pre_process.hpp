@@ -436,9 +436,6 @@ class sparse_matrix_processor {
         sparse_matrix_processor(std::string name, type_int num_rows, type_int num_cols, \
             std::vector<type_int>&& col_ptrs, std::vector<type_int>&& row_indices, std::vector<type_data>&& values) : name(name)
         {
-            
-
-
 
             mat = custom_space::sparse_matrix(num_rows, num_cols, std::move(values), std::move(row_indices), std::move(col_ptrs));
 
