@@ -10,6 +10,9 @@ use utils::{read_mtx, write_mtx};
 mod jl_sketch;
 use jl_sketch::{jl_sketch_sparse,jl_sketch_sparse_blocked};
 
+mod sparsifier;
+use sparsifier::{Sparsifier,Triplet};
+
 use crate::ffi::FlattenedVec;
 
 #[cxx::bridge]
@@ -120,6 +123,8 @@ fn main() {
     let block_rows: usize = 100;
     let block_cols: usize = 15000;
     let display: bool = false;
+
+    let s = Sparsifier::new(10000, 0.5, 4, 2, true);
 
     let sketch_filename = "data/fake_jl_multi.csv";
     let input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
