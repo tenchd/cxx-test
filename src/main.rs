@@ -100,14 +100,16 @@ fn precondition_and_solve(input_filename: &str, sketch_filename: &str, seed: u64
     let m = shared_jl_cols_flat.num_cols;
     let n = shared_jl_cols_flat.num_rows;    
 
-
+    // let input_col_ptrs = input_csc.indptr().as_slice().unwrap().to_vec();
+    // let input_row_indices = input_csc.indices().to_vec();
 
     let temp_input_col_ptrs = input_csc.indptr().as_slice().unwrap().to_vec();
     let input_col_ptrs: Vec<i32> = temp_input_col_ptrs.into_iter().map(|x| x as i32).collect();
     let temp_input_row_indices = input_csc.indices().to_vec();
     let input_row_indices: Vec<i32> = temp_input_row_indices.into_iter().map(|x| x as i32).collect();
+
     let input_values = input_csc.data().to_vec();
-    //let input_values = temp_input_values.into_iter().map(|x| x as u64).collect();
+
     println!("input col_ptrs size in rust: {:?}. first value: {}", input_col_ptrs.len(), input_col_ptrs[0]);
     println!("input row_indices size in rust: {:?}. first value: {}", input_row_indices.len(), input_row_indices[0]);
     println!("input values size in rust: {:?}. first value: {}", input_values.len(), input_values[0]);

@@ -47,7 +47,7 @@ impl Sparsifier {
         let current_laplacian: CsMat<f64> = CsMat::zero((num_nodes.try_into().unwrap(), num_nodes.try_into().unwrap()));     
 
         if verbose {println!("brother you just built a sparsifier");}
-        
+
         Sparsifier{
             num_nodes: num_nodes,
             new_entries: new_entries,
@@ -59,5 +59,17 @@ impl Sparsifier {
             beta: beta,
             verbose: verbose,
         }
+    }
+
+    // returns # of edges in the entire sparsifier (including the new edges in triplet form and old edges in sparse matrix form)
+    // note that currently it overcounts for laplacian since it also counts diagonals. maybe change this later?
+    pub fn size_of(self) -> i32 {
+        //self.new_entries.col_indices.len().try_into().unwrap() as i32 + self.current_laplacian.nnz().try_into().unwrap() as i32
+        5
+    }
+
+    // inserts an edge into the sparsifier. if this makes the size of the sparsifier cross the threshold, trigger sparsification.
+    pub fn insert(&mut self, v1: i32, v2: i32) {
+
     }
 }
