@@ -84,6 +84,11 @@ impl Triplet {
             print!("{}, ", value);
         }
         println!("");
+
+        for value in &self.diagonal {
+            print!("{}, ", value);
+        }
+        println!("");
     }
 }
 
@@ -190,5 +195,18 @@ impl Sparsifier {
             print!("({}, {}) has value {} ", row, col, value);
         }
         println!("");
+    }
+
+    // see if there's a library function to make summing cols more efficient later.
+    // also find a way to write efficient code to sum rows. for now, maybe just do em as you do cols?
+    pub fn check_diagonal(&self) {
+        for (col_index, col_vector) in self.current_laplacian.outer_iterator().enumerate() {
+            let mut sum:f64 = 0.0;
+            for value in col_vector.iter() {
+                sum += value.1;
+            }
+            assert!(sum == 0.0, "column where we messed up: {}. norm value: {}.", col_index, col_vector.l1_norm());
+        }
+        println!("all good");
     }
 }
