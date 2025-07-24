@@ -73,6 +73,18 @@ impl Triplet {
         self.values = vec![];
 
     }
+
+    pub fn display(&self) {
+        println!("triplet values:");
+        for value in &self.col_indices {
+            print!("{}, ", value);
+        }
+        println!("");
+        for value in &self.row_indices {
+            print!("{}, ", value);
+        }
+        println!("");
+    }
 }
 
 pub struct Sparsifier{
@@ -117,7 +129,7 @@ impl Sparsifier {
 
     // returns # of edges in the entire sparsifier (including the new edges in triplet form and old edges in sparse matrix form)
     // note that currently it overcounts for laplacian since it also counts diagonals. maybe change this later?
-    pub fn size_of(self) -> i32 {
+    pub fn size_of(&self) -> i32 {
         <usize as TryInto<i32>>::try_into(self.new_entries.col_indices.len()).unwrap()  // total entries in triplet form
         + 
         <usize as TryInto<i32>>::try_into(self.current_laplacian.nnz()).unwrap()  // total nonzeros in laplacian
@@ -147,6 +159,14 @@ impl Sparsifier {
         // add 1 to diagonal entries v1,v1 and v2,v2
         self.new_entries.diagonal[<i32 as TryInto<usize>>::try_into(v1).unwrap()] += 1.0;
         self.new_entries.diagonal[<i32 as TryInto<usize>>::try_into(v2).unwrap()] += 1.0;
+
+        //TODO: if it's too big, trigger sparsification step
+    }
+
+    // returns probabilities for all nonzero entries in laplacian.
+    pub fn get_probs(&self) -> Vec<f64> {
+        // need to subsample, but only off-diagonals.
+        vec![]
     }
 
     pub fn sparsify(&mut self) {
@@ -161,6 +181,14 @@ impl Sparsifier {
         // add the new entries to the laplacian
         self.current_laplacian = self.current_laplacian.add(&new_stuff);
 
-        
+
+    }
+
+    pub fn sparse_display(&self) {
+        println!("laplacian: ");
+        for (value, (row, col)) in self.current_laplacian.iter() {
+            print!("({}, {}) has value {} ", row, col, value);
+        }
+        println!("");
     }
 }
