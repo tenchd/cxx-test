@@ -1,5 +1,6 @@
 use sprs::{CsMatI, CsMatBase, TriMatBase, TriMatI};
 use std::ops::Add;
+use rand::Rng;
 
 // template types later
 #[derive(Clone)]
@@ -168,10 +169,16 @@ impl Sparsifier {
         //TODO: if it's too big, trigger sparsification step
     }
 
-    // returns probabilities for all nonzero entries in laplacian.
-    pub fn get_probs(&self) -> Vec<f64> {
+    // returns probabilities for all nonzero entries in laplacian. placeholder for now
+    pub fn get_probs(length: usize) -> Vec<f64> {
         // need to subsample, but only off-diagonals.
-        vec![]
+        vec![0.5; length]
+    }
+
+    pub fn flip_coins(length: usize) -> Vec<f64> {
+        let mut rng = rand::thread_rng();
+        let coins = vec![rng.gen_range(0.0..1.0); length];
+        coins
     }
 
     pub fn sparsify(&mut self) {
@@ -185,7 +192,27 @@ impl Sparsifier {
         self.new_entries.delete_state();
         // add the new entries to the laplacian
         self.current_laplacian = self.current_laplacian.add(&new_stuff);
+        self.check_diagonal();
+        let diag = self.current_laplacian.diag();
 
+        let diag_nnz = diag.nnz();
+        let num_nnz = (self.current_laplacian.nnz() - diag_nnz) / 2;
+        // janky check for integer rounding. i hang my head in shame
+        assert_eq!(num_nnz*2, (self.current_laplacian.nnz()-diag_nnz));
+        // get probabilities for each edge
+        let probs = Self::get_probs(num_nnz);
+        let coins = Self::flip_coins(num_nnz);
+        //encodes whether each edge survives sampling or not. True means it is sampled, False means it's not sampled
+        let outcomes: Vec<bool> =  probs.clone().into_iter().zip(coins.into_iter()).map(|(p, c)| c < p).collect();
+
+        let mut counter = 0;
+        for (value, (row, col)) in self.current_laplacian.iter() {
+            let outcome = outcomes[counter];
+            let prob = probs[counter];
+            // still need to update entries in off-diagonal and diagonal. including reweighting. probably put this in a function
+            // just realized that updating both symmetric versions of elements forces row-order accesses in the upper diagonal. should optimize this eventually
+        }
+        self.check_diagonal();
 
     }
 
@@ -202,8 +229,8 @@ impl Sparsifier {
     pub fn check_diagonal(&self) {
         for (col_index, col_vector) in self.current_laplacian.outer_iterator().enumerate() {
             let mut sum:f64 = 0.0;
-            for value in col_vector.iter() {
-                sum += value.1;
+            for (_, value) in col_vector.iter() {
+                sum += value;
             }
             assert!(sum == 0.0, "column where we messed up: {}. norm value: {}.", col_index, col_vector.l1_norm());
         }
