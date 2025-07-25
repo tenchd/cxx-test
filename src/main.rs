@@ -126,7 +126,29 @@ fn main() {
     let block_cols: usize = 15000;
     let display: bool = false;
 
-    let s = Sparsifier::new(10000, 0.5, 4, 2, true);
+    let mut s = Sparsifier::new(100, 0.5, 4, 2, true);
+
+    for i in 0..10 {
+        s.insert(i, i+1);
+    }
+
+    s.new_entries.display();
+    //s.sparse_display();
+    s.sparsify();
+    //s.new_entries.display();
+    s.sparse_display();
+
+    s.check_diagonal();
+
+    // for i in 11..20 {
+    //     s.insert(i, i+1);
+    // }
+
+    // s.new_entries.display();
+    // s.sparse_display();
+    // s.sparsify();
+    // s.new_entries.display();
+    // s.sparse_display();
 
     let sketch_filename = "data/fake_jl_multi.csv";
     let input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
@@ -134,5 +156,7 @@ fn main() {
     let solution = precondition_and_solve(input_filename, sketch_filename, seed, jl_factor, block_rows, block_cols, display);
 
     println!("solution has {} cols, {} rows, and initial value {}", solution.num_cols, solution.num_rows, solution.vec[0]);
+
+    
 
 }
