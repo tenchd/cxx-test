@@ -1,3 +1,4 @@
+#![allow(unused)]
 use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
 use cxx::Vector;
@@ -5,7 +6,7 @@ use sprs::{CsMat};
 extern crate fasthash;
 
 mod utils;
-use utils::{read_mtx, write_mtx};
+use utils::{read_mtx, write_mtx,InputStream};
 
 mod jl_sketch;
 use jl_sketch::{jl_sketch_sparse,jl_sketch_sparse_blocked};
@@ -126,37 +127,20 @@ fn main() {
     let block_cols: usize = 15000;
     let display: bool = false;
 
-    let mut s = Sparsifier::new(100, 0.5, 4, 2, true);
+    let epsilon = 0.5;
+    let beta_constant = 4;
+    let row_constant = 2;
+    let verbose = true;
 
-    for i in 0..10 {
-        s.insert(i, i+1);
-    }
-
-    s.new_entries.display();
-    //s.sparse_display();
-    s.sparsify();
-    //s.new_entries.display();
-    s.sparse_display();
-
-    s.check_diagonal();
-
-    // for i in 11..20 {
-    //     s.insert(i, i+1);
-    // }
-
-    // s.new_entries.display();
-    // s.sparse_display();
-    // s.sparsify();
-    // s.new_entries.display();
-    // s.sparse_display();
+    let stream = InputStream::new("data/cage3.mtx");
+    stream.run_stream(epsilon, beta_constant, row_constant, verbose);
 
     let sketch_filename = "data/fake_jl_multi.csv";
     let input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
 
-    let solution = precondition_and_solve(input_filename, sketch_filename, seed, jl_factor, block_rows, block_cols, display);
+    //let solution = precondition_and_solve(input_filename, sketch_filename, seed, jl_factor, block_rows, block_cols, display);
 
-    println!("solution has {} cols, {} rows, and initial value {}", solution.num_cols, solution.num_rows, solution.vec[0]);
+    //println!("solution has {} cols, {} rows, and initial value {}", solution.num_cols, solution.num_rows, solution.vec[0]);
 
-    
 
 }

@@ -1,6 +1,7 @@
 use sprs::{CsMatI, CsMatBase, TriMatBase, TriMatI};
 use std::ops::Add;
 use rand::Rng;
+use approx::AbsDiffEq;
 
 // template types later
 #[derive(Clone)]
@@ -33,19 +34,23 @@ impl Triplet {
         assert!(v1 < self.num_nodes);
         assert!(v2 < self.num_nodes);
 
-        // insert -1 into v1,v2
-        self.row_indices.push(v1);
-        self.col_indices.push(v2);
-        self.values.push(value);
+        //input files may have diagonals; we should skip them
+        // this is a kludge for reading in mtx files. later this logic should be moved elsewhere.
+        if (v1 != v2) {
+            // insert -value into v1,v2
+            self.row_indices.push(v1);
+            self.col_indices.push(v2);
+            self.values.push(value*-1.0);
 
-        // insert -1 into v2,v1
-        self.row_indices.push(v2);
-        self.col_indices.push(v1);
-        self.values.push(value);
+            // insert -value into v2,v1
+            self.row_indices.push(v2);
+            self.col_indices.push(v1);
+            self.values.push(value*-1.0);
 
-        // add 1 to diagonal entries v1,v1 and v2,v2
-        self.diagonal[<i32 as TryInto<usize>>::try_into(v1).unwrap()] += value;
-        self.diagonal[<i32 as TryInto<usize>>::try_into(v2).unwrap()] += value;
+            // add 1 to diagonal entries v1,v1 and v2,v2
+            self.diagonal[<i32 as TryInto<usize>>::try_into(v1).unwrap()] += value;
+            self.diagonal[<i32 as TryInto<usize>>::try_into(v2).unwrap()] += value;
+        }
     }
 
     pub fn process_diagonal(&mut self) {
@@ -85,7 +90,10 @@ impl Triplet {
             print!("{}, ", value);
         }
         println!("");
-
+        for value in &self.values {
+            print!("{}, ", value);
+        }
+        println!("");
         for value in &self.diagonal {
             print!("{}, ", value);
         }
@@ -143,7 +151,7 @@ impl Sparsifier {
     }
 
     // inserts an edge into the sparsifier. if this makes the size of the sparsifier cross the threshold, trigger sparsification.
-    pub fn insert(&mut self, v1: i32, v2: i32) {
+    pub fn insert(&mut self, v1: i32, v2: i32, value: f64) {
         // insert -1 into v1,v2 and v2,v1. add 1 to v1,v1 and v2,v2
         // problem: duplicate values in diagonals for triplets. 
         // am i assuming that each edge appears at most once in the stream? if that's violated, i could have duplicate entries in the triplets
@@ -152,19 +160,11 @@ impl Sparsifier {
         assert!(v1 < self.num_nodes);
         assert!(v2 < self.num_nodes);
 
-        // insert -1 into v1,v2
-        self.new_entries.row_indices.push(v1);
-        self.new_entries.col_indices.push(v2);
-        self.new_entries.values.push(-1.0);
-
-        // insert -1 into v2,v1
-        self.new_entries.row_indices.push(v2);
-        self.new_entries.col_indices.push(v1);
-        self.new_entries.values.push(-1.0);
-
-        // add 1 to diagonal entries v1,v1 and v2,v2
-        self.new_entries.diagonal[<i32 as TryInto<usize>>::try_into(v1).unwrap()] += 1.0;
-        self.new_entries.diagonal[<i32 as TryInto<usize>>::try_into(v2).unwrap()] += 1.0;
+        // ignore diagonal entries, upper triangular entries, and entries with 0 value
+        if (v1 < v2 && value != 0.0){
+            self.new_entries.insert(v1, v2, value);
+            println!("inserting ({}, {}) with value {}", v1, v2, value);
+        }
 
         //TODO: if it's too big, trigger sparsification step
     }
@@ -232,7 +232,8 @@ impl Sparsifier {
             for (_, value) in col_vector.iter() {
                 sum += value;
             }
-            assert!(sum == 0.0, "column where we messed up: {}. norm value: {}.", col_index, col_vector.l1_norm());
+            // check each column is sum 0. floating point error means you'll be a little off
+            assert!(sum.abs_diff_eq(&0.0, 1e-10), "column where we messed up: {}. column sum: {}.", col_index, sum);
         }
         println!("all good");
     }

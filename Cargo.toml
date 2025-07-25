@@ -10,6 +10,7 @@ ndarray = "0.16.1"
 rand = "0.8.5"
 ndarray-rand = "0.15.0"
 fasthash = "0.4.0"
+approx = "0.5.1"
 
 [build-dependencies]
 cxx-build = "1.0"
