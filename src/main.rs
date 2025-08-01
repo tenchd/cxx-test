@@ -172,11 +172,11 @@ fn main() {
     //stream.run_stream(epsilon, beta_constant, row_constant, verbose);
 
 
-    //let sketch_filename = "data/fake_jl_multi.csv";
-    //let input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
+    let sketch_filename = "data/fake_jl_multi.csv";
+    let input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
 
-    let sketch_filename = "data/virus_jl_sketch.csv";
-    let input_filename = "/global/u1/d/dtench/m1982/david/bulk_to_process/virus/virus.mtx";
+    //let sketch_filename = "data/virus_jl_sketch.csv";
+    //let input_filename = "/global/u1/d/dtench/m1982/david/bulk_to_process/virus/virus.mtx";
 
 
     let solution = precondition_and_solve(input_filename, sketch_filename, seed, jl_factor, block_rows, block_cols, display);
