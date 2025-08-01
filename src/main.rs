@@ -45,7 +45,7 @@ mod ffi {
 
         fn sprs_correctness_test(col_ptrs: Vec<i32>, row_indices: Vec<i32>, values: Vec<f64>);
 
-        fn run_solve_lap(shared_jl_cols: FlattenedVec, rust_col_ptrs: Vec<i32>, rust_row_indices: Vec<i32>, rust_values: Vec<f64>) -> FlattenedVec;
+        fn run_solve_lap(shared_jl_cols: FlattenedVec, rust_col_ptrs: Vec<i32>, rust_row_indices: Vec<i32>, rust_values: Vec<f64>, num_nodes:i32) -> FlattenedVec;
     }
 }
 
@@ -101,6 +101,7 @@ fn precondition_and_solve(input_filename: &str, sketch_filename: &str, seed: u64
 
     let n: usize = input_csc.cols();
     let m: usize = input_csc.rows();
+    assert_eq!(n,m);
 
     //let seed: u64 = 1;
     //let jl_factor: f64 = 1.5;
@@ -115,8 +116,8 @@ fn precondition_and_solve(input_filename: &str, sketch_filename: &str, seed: u64
     //write_mtx("real_jl_sketch", &sketch_sparse_format);
     
     let shared_jl_cols_flat = read_vecs_from_file_flat(sketch_filename);
-    let m = shared_jl_cols_flat.num_cols;
-    let n = shared_jl_cols_flat.num_rows;    
+    let m: i32 = shared_jl_cols_flat.num_cols.try_into().unwrap();
+    let n: i32 = shared_jl_cols_flat.num_rows.try_into().unwrap();    
 
     // let input_col_ptrs = input_csc.indptr().as_slice().unwrap().to_vec();
     // let input_row_indices = input_csc.indices().to_vec();
@@ -133,7 +134,7 @@ fn precondition_and_solve(input_filename: &str, sketch_filename: &str, seed: u64
     println!("input values size in rust: {:?}. first value: {}", input_values.len(), input_values[0]);
     println!("nodes in input csc: {}, {}", input_csc.cols(), input_csc.rows());
     //ffi::sprs_correctness_test(input_col_ptrs, input_row_indices, input_values);
-    ffi::run_solve_lap(shared_jl_cols_flat, input_col_ptrs, input_row_indices, input_values)
+    ffi::run_solve_lap(shared_jl_cols_flat, input_col_ptrs, input_row_indices, input_values, n)
 }
 
 fn write_csv(filename: &str, array: &Array2<f64>) -> Result<(), Box<dyn Error>> {

@@ -669,7 +669,7 @@ void sprs_correctness_test(rust::Vec<custom_idx> rust_col_ptrs, rust::Vec<custom
 
 // function that runs the solver code on rust-provided laplacian and jl sketch.
 FlattenedVec run_solve_lap(FlattenedVec shared_jl_cols, rust::Vec<custom_idx> rust_col_ptrs, \
-    rust::Vec<custom_idx> rust_row_indices, rust::Vec<double> rust_values) {
+    rust::Vec<custom_idx> rust_row_indices, rust::Vec<double> rust_values, int num_nodes) {
 
     //constexpr const char *input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
     int num_threads = 32; 
@@ -683,8 +683,8 @@ FlattenedVec run_solve_lap(FlattenedVec shared_jl_cols, rust::Vec<custom_idx> ru
     std::vector<custom_idx> row_indices;
     std::copy(rust_row_indices.begin(), rust_row_indices.end(), std::back_inserter(row_indices));
 
-    custom_idx num_rows = col_ptrs.size() - 1;
-    custom_idx num_cols = col_ptrs.size() - 1;
+    custom_idx num_rows = num_nodes;
+    custom_idx num_cols = num_nodes;
     //printf("num rows: %d\n", col_ptrs.size()-1);
     std::string input_filename = "placeholder_sparse_matrix_processor_name";
     sparse_matrix_processor<custom_idx, double> processor = sparse_matrix_processor(input_filename, num_rows, num_cols, std::move(col_ptrs), std::move(row_indices), std::move(values));
