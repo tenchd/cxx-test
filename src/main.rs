@@ -7,13 +7,14 @@ extern crate fasthash;
 extern crate csv;
 extern crate ndarray;
 extern crate ndarray_csv;
+extern crate rand;
 
 mod utils;
 mod jl_sketch;
 mod sparsifier;
 mod stream;
 
-use utils::{read_mtx, write_mtx, write_csv, read_vecs_from_file_flat};
+use utils::{read_mtx, write_mtx, write_csv, read_vecs_from_file_flat, make_fake_jl_col};
 use jl_sketch::{jl_sketch_sparse,jl_sketch_sparse_blocked};
 use sparsifier::{Sparsifier,Triplet};
 use stream::InputStream;
@@ -108,7 +109,7 @@ fn precondition_and_solve(input_filename: &str, sketch_filename: &str, seed: u64
 
 
 
-fn main() {
+fn solve_test() {
 
     let seed: u64 = 1;
     let jl_factor: f64 = 1.5;
@@ -125,16 +126,42 @@ fn main() {
     //stream.run_stream(epsilon, beta_constant, row_constant, verbose);
 
 
-    //let sketch_filename = "data/fake_jl_multi.csv";
-    //let input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
+    let sketch_filename = "data/fake_jl_multi.csv";
+    let input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
+    let add_node = false;
 
-    let sketch_filename = "data/virus_jl_sketch.csv";
-    let input_filename = "/global/u1/d/dtench/m1982/david/bulk_to_process/virus/virus.mtx";
-    let add_node = true;
+    //let sketch_filename = "data/virus_jl_sketch.csv";
+    //let input_filename = "/global/u1/d/dtench/m1982/david/bulk_to_process/virus/virus.mtx";
+    //let add_node = true;
 
 
     let solution = precondition_and_solve(input_filename, sketch_filename, seed, jl_factor, block_rows, block_cols, display, add_node);
 
     println!("solution has {} cols, {} rows, and initial value {}", solution.num_cols, solution.num_rows, solution.vec[0]);
 
+}
+
+fn lap_test() {
+    let seed: u64 = 1;
+    let jl_factor: f64 = 1.5;
+    let block_rows: usize = 100;
+    let block_cols: usize = 15000;
+    let display: bool = false;
+
+    let epsilon = 0.5;
+    let beta_constant = 4;
+    let row_constant = 2;
+    let verbose = false;
+
+    let input_filename = "/global/u1/d/dtench/m1982/david/bulk_to_process/virus/virus.mtx";
+    let add_node = true;
+
+    let stream = InputStream::new(input_filename, add_node);
+    stream.run_stream(epsilon, beta_constant, row_constant, verbose);
+}
+
+fn main() {
+    let num_values = 10;
+    println!("{:?}", make_fake_jl_col(num_values).vec);
+    //lap_test();
 }

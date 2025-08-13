@@ -10,6 +10,9 @@ use std::error::Error;
 use csv::{ReaderBuilder, WriterBuilder};
 use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
+use rand::Rng;
+use rand::distributions::{Distribution, Uniform};
+use approx::AbsDiffEq;
 
 use crate::sparsifier::{Sparsifier,Triplet};
 use crate::ffi;
@@ -95,6 +98,34 @@ pub fn write_csv(filename: &str, array: &Array2<f64>) -> Result<(), Box<dyn Erro
     // Ensure that we got the original array back
     assert_eq!(array_read, array);
     Ok(())
+}
+
+//used for testing solver. assumes num_values is equal to number of nodes in graph +1.
+//put random values in for all positions except the last, which is set so that the sum
+// is equal to 0.
+
+pub fn make_fake_jl_col(num_values: usize) -> ffi::FlattenedVec{
+    let mut fake_jl_col: Vec<f64> = vec![0.0; num_values];
+    let mut rng = rand::thread_rng();
+    let uniform = Uniform::new(-1.0, 1.0);
+    // add random values for each entry except the last.
+    for i in 0..num_values-1 {
+        let value = uniform.sample(&mut rng);
+        if let Some(position) = fake_jl_col.get_mut(i) {
+            *position += value;
+        }
+        //fake_jl_col.get_mut(i) += value;
+    }
+    let sum: f64 = fake_jl_col.iter().sum();
+    if let Some(position) = fake_jl_col.get_mut(num_values-1){
+        *position += -1.0 * sum;
+    }
+    //fake_jl_col.get_mut(num_values-1) += -1.0 * sum;
+    let sum: f64 = fake_jl_col.iter().sum();
+    assert!(sum.abs_diff_eq(&0.0, 1e-10), "fake jl sketch vector sum is nonzero: {}", sum);
+    let output = ffi::FlattenedVec{vec: fake_jl_col, num_cols: num_values, num_rows: 1 };
+    return output;
+
 }
 
 

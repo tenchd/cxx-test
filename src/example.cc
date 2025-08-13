@@ -673,7 +673,7 @@ FlattenedVec run_solve_lap(FlattenedVec shared_jl_cols, rust::Vec<custom_idx> ru
 
     //constexpr const char *input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
     int num_threads = 32; 
-    constexpr char *output_filename = "output.txt";
+    constexpr char *output_filename = "";
     bool is_graph = 0;
 
     std::vector<double> values;

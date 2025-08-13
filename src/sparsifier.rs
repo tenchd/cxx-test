@@ -167,7 +167,7 @@ impl Sparsifier {
         // ignore diagonal entries, upper triangular entries, and entries with 0 value
         if (v1 < v2 && value != 0.0){
             self.new_entries.insert(v1, v2, value);
-            println!("inserting ({}, {}) with value {}", v1, v2, value);
+            //println!("inserting ({}, {}) with value {}", v1, v2, value);
         }
 
         //TODO: if it's too big, trigger sparsification step
@@ -196,6 +196,7 @@ impl Sparsifier {
         self.new_entries.delete_state();
         // add the new entries to the laplacian
         self.current_laplacian = self.current_laplacian.add(&new_stuff);
+        println!("checking diagonal after populating laplacian");
         self.check_diagonal();
         let diag = self.current_laplacian.diag();
 
@@ -216,6 +217,8 @@ impl Sparsifier {
             // still need to update entries in off-diagonal and diagonal. including reweighting. probably put this in a function
             // just realized that updating both symmetric versions of elements forces row-order accesses in the upper diagonal. should optimize this eventually
         }
+
+        println!("checking diagonal after sampling");
         self.check_diagonal();
 
     }

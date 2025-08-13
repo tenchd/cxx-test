@@ -19,12 +19,16 @@ impl InputStream {
         // fix this later.
         let num_nodes = input.outer_dims();
         assert_eq!(input.outer_dims(), input.inner_dims());
+        let mut diag_zeros = 0;
         for result in input.diag_iter_mut() {
             match result {
                 Some(x) => *x = 0.0,
-                None => println!("problem iterating over diagonal"),
+                None => diag_zeros += 1,
             }
         }
+
+        println!("mtx file has {} nodes. there are {} zero entries on the diagonal originally.", num_nodes, diag_zeros);
+
         // for value in input.iter() {
         //     println!("{:?}", value);
         // }
@@ -41,12 +45,14 @@ impl InputStream {
             sparsifier.insert(row.try_into().unwrap(), col.try_into().unwrap(), *value);
         }
 
-        sparsifier.new_entries.display();
+        //sparsifier.new_entries.display();
         //s.sparse_display();
         sparsifier.sparsify();
         //s.new_entries.display();
-        sparsifier.sparse_display();
+        //sparsifier.sparse_display();
 
+
+        println!("checking diagonal final time");
         sparsifier.check_diagonal();
 
     }
