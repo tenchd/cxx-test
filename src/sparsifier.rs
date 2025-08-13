@@ -65,6 +65,9 @@ impl Triplet {
 
     pub fn to_csc(self) -> CsMatI::<f64, i32> {
 
+        //I think i need to change this so that there's an empty row and column at the end. i should be able to do this by simply setting the number of rows and cols
+        // equal to self.num_nodes+1. since this is a triplet rep i think that's ok because neither the row indices or col indices rely on the number of rows or cols.
+        // (except for overflow purposes.)
         let trip_form: TriMatBase<Vec<i32>, Vec<f64>>  = TriMatI::<f64, i32>::from_triplets((self.num_nodes as usize, self.num_nodes as usize), self.row_indices, self.col_indices, self.values);
         let csc_form: CsMatBase<f64, i32, Vec<i32>, Vec<i32>, Vec<f64>, _> = trip_form.to_csc();
 
@@ -123,6 +126,7 @@ impl Sparsifier {
         // initialize empty new elements triplet vectors
         let new_entries = Triplet::new(num_nodes);
         // initialize empty sparse matrix for the laplacian
+        // it needs to have num_nodes+1 rows and cols actually
         let current_laplacian: CsMatBase<f64, i32, Vec<i32>, Vec<i32>, Vec<f64>, _> = CsMatI::<f64, i32>::zero((num_nodes.try_into().unwrap(), num_nodes.try_into().unwrap()));     
 
         if verbose {println!("brother you just built a sparsifier");}

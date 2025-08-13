@@ -1,22 +1,39 @@
 // this file stores boring functions for the Rust side of the sparsifier implementation. 
 // boring means not related to ffi, not really part of the core sparsifier logic, etc.
 
-use sprs::{CsMat};
+use sprs::{CsMat,CsMatI,TriMatI};
 use sprs::io::{read_matrix_market, write_matrix_market};
 
 use crate::sparsifier::{Sparsifier,Triplet};
 
-pub fn read_mtx(filename: &str) -> CsMat<f64>{
-    let trip = read_matrix_market::<f64, usize, &str>(filename).unwrap();
+pub fn read_mtx(filename: &str, add_node: bool) -> CsMatI<f64, i32>{
+    let trip = read_matrix_market::<f64, i32, &str>(filename).unwrap();
     // for i in trip.triplet_iter() {
     //     println!("{:?}", i);
     // }
-    let col_format = trip.to_csc::<usize>();
+
+    assert_eq!(trip.cols(), trip.rows());
+    if add_node {
+        let num_nodes = trip.cols();
+        let mut trip_fixed = TriMatI::<f64, i32>::new((num_nodes+1, num_nodes+1));
+        for triplet in trip.triplet_iter() {
+            let (val, (row, col)) = triplet;
+            trip_fixed.add_triplet(row as usize, col as usize, *val);
+        }
+
+        let col_format = trip_fixed.to_csc::<i32>();
+        return col_format;
+    }
+    else {
+        let col_format = trip.to_csc::<i32>();
+
+        return col_format;
+    }
+    
     // for i in guy.iter() {
     //     println!("{:?}", i);
     // }
     //println!("density of input {}: {}", filename, guy.density());
-    return col_format;
 }
 
 //make this generic later maybe
@@ -25,7 +42,7 @@ pub fn write_mtx(filename: &str, matrix: &CsMat<f64>) {
 }
 
 pub struct InputStream {
-    pub input_matrix: CsMat<f64>,
+    pub input_matrix: CsMatI<f64, i32>,
 //    pub input_iterator: 
     pub num_nodes: usize,
 //    pub num_edges: usize,
@@ -35,8 +52,8 @@ impl InputStream {
     // deal with diagonals?
     // if the graph is symmetric, de-symmetrize it ideally
     // how does the mtx reader handle symmetry?
-    pub fn new(filename: &str) -> InputStream {
-        let mut input = read_mtx(filename);
+    pub fn new(filename: &str, add_node: bool) -> InputStream {
+        let mut input = read_mtx(filename, add_node);
         // zeroed diagonal entries remain explicitly represented using this format.
         // fix this later.
         let num_nodes = input.outer_dims();

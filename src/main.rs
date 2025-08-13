@@ -79,7 +79,8 @@ fn read_vecs_from_file_flat(filename: &str) -> FlattenedVec {
 }
 
 fn jl_sketch_dataset(input_filename: &str, output_filename: &str, jl_factor: f64, seed: u64){
-    let input_csc = read_mtx(input_filename);
+    //be careful about jl sketch dimensions now that i'm adding a row and col to the laplacian. check this later
+    let input_csc = read_mtx(input_filename, false);
 
     let output_csc = jl_sketch_sparse(&input_csc, jl_factor, seed);
     let dense_output = output_csc.to_dense().reversed_axes();
@@ -88,10 +89,10 @@ fn jl_sketch_dataset(input_filename: &str, output_filename: &str, jl_factor: f64
 }
 
 // currently assumes that you don't need to manage diagonals of input matrix. fix this later
-fn precondition_and_solve(input_filename: &str, sketch_filename: &str, seed: u64, jl_factor: f64, block_rows: usize, block_cols: usize, display:bool) -> FlattenedVec {
+fn precondition_and_solve(input_filename: &str, sketch_filename: &str, seed: u64, jl_factor: f64, block_rows: usize, block_cols: usize, display: bool, add_node: bool) -> FlattenedVec {
     //let filename = "data/fake_jl_multi.csv".to_string();
 
-    let input_csc = read_mtx(input_filename);
+    let input_csc = read_mtx(input_filename, add_node);
     println!("{}", input_csc.outer_dims());
 
     //make sure diagonals are nonzero; generalize this later
@@ -173,14 +174,15 @@ fn main() {
     //stream.run_stream(epsilon, beta_constant, row_constant, verbose);
 
 
-    let sketch_filename = "data/fake_jl_multi.csv";
-    let input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
+    //let sketch_filename = "data/fake_jl_multi.csv";
+    //let input_filename = "/global/u1/d/dtench/cholesky/Parallel-Randomized-Cholesky/physics/parabolic_fem/parabolic_fem-nnz-sorted.mtx";
 
-    //let sketch_filename = "data/virus_jl_sketch.csv";
-    //let input_filename = "/global/u1/d/dtench/m1982/david/bulk_to_process/virus/virus.mtx";
+    let sketch_filename = "data/virus_jl_sketch.csv";
+    let input_filename = "/global/u1/d/dtench/m1982/david/bulk_to_process/virus/virus.mtx";
+    let add_node = true;
 
 
-    let solution = precondition_and_solve(input_filename, sketch_filename, seed, jl_factor, block_rows, block_cols, display);
+    let solution = precondition_and_solve(input_filename, sketch_filename, seed, jl_factor, block_rows, block_cols, display, add_node);
 
     println!("solution has {} cols, {} rows, and initial value {}", solution.num_cols, solution.num_rows, solution.vec[0]);
 
