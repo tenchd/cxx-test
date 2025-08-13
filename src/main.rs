@@ -4,25 +4,19 @@ use std::io::{self, prelude::*, BufReader};
 use cxx::Vector;
 use sprs::{CsMat};
 extern crate fasthash;
-
 extern crate csv;
 extern crate ndarray;
 extern crate ndarray_csv;
 
-use csv::{ReaderBuilder, WriterBuilder};
-use ndarray::{array, Array2};
-use ndarray_csv::{Array2Reader, Array2Writer};
-use std::error::Error;
-
 mod utils;
-use utils::{read_mtx, write_mtx,InputStream};
-
 mod jl_sketch;
-use jl_sketch::{jl_sketch_sparse,jl_sketch_sparse_blocked};
-
 mod sparsifier;
-use sparsifier::{Sparsifier,Triplet};
+mod stream;
 
+use utils::{read_mtx, write_mtx, write_csv, read_vecs_from_file_flat};
+use jl_sketch::{jl_sketch_sparse,jl_sketch_sparse_blocked};
+use sparsifier::{Sparsifier,Triplet};
+use stream::InputStream;
 use crate::ffi::FlattenedVec;
 
 #[cxx::bridge]
@@ -49,34 +43,7 @@ mod ffi {
     }
 }
 
-// reads a jl_sketch vec of vecs from a file and 
-fn read_vecs_from_file_flat(filename: &str) -> FlattenedVec {
-    let file = File::open(filename).unwrap();
-    let reader = BufReader::new(file);
 
-    let mut jl_vec: Vec<f64> = vec![];
-    let mut line_length: usize = 0; 
-    let mut first: bool = true;
-    let mut line_counter: usize = 0;
-
-    for line in reader.lines() {
-        line_counter += 1;
-        let mut col: Vec<f64> = line.expect("uh oh").split(",")
-                                        .map(|x| x.trim().parse::<f64>().unwrap())
-                                        //.map(|v| ffi::Shared { v })
-                                        .collect();
-        if first {
-            line_length = col.len().try_into().unwrap();
-        }
-        let current_line_length= col.len().try_into().unwrap();
-        assert_eq!(line_length, current_line_length);
-        jl_vec.append(&mut col);
-    }
-    //println!("line length = {}, num_lines = {}", line_length, line_counter);
-
-    let mut jl_cols_flat = ffi::FlattenedVec{vec: jl_vec, num_cols: line_counter, num_rows: line_length};
-    jl_cols_flat
-}
 
 fn jl_sketch_dataset(input_filename: &str, output_filename: &str, jl_factor: f64, seed: u64){
     //be careful about jl sketch dimensions now that i'm adding a row and col to the laplacian. check this later
@@ -107,7 +74,7 @@ fn precondition_and_solve(input_filename: &str, sketch_filename: &str, seed: u64
     //let seed: u64 = 1;
     //let jl_factor: f64 = 1.5;
     let jl_dim = ((n as f64).log2() *jl_factor).ceil() as usize;
-    println!("output matrix is {}x{}", n, jl_dim);
+    println!("output matrix should be {}x{}", n, jl_dim);
 
     // not used at the moment; need to convert it to flattenedvec so i can pass it to c++. try the to_dense function maybe?
     //let mut sketch_sparse_format: CsMat<f64> = CsMat::zero((jl_dim,n)).transpose_into();
@@ -118,7 +85,8 @@ fn precondition_and_solve(input_filename: &str, sketch_filename: &str, seed: u64
     
     let shared_jl_cols_flat = read_vecs_from_file_flat(sketch_filename);
     let m: i32 = shared_jl_cols_flat.num_cols.try_into().unwrap();
-    let n: i32 = shared_jl_cols_flat.num_rows.try_into().unwrap();    
+    let n: i32 = shared_jl_cols_flat.num_rows.try_into().unwrap();
+    println!("output matrix actually is {}x{}", n, m);    
 
     // let input_col_ptrs = input_csc.indptr().as_slice().unwrap().to_vec();
     // let input_row_indices = input_csc.indices().to_vec();
@@ -138,24 +106,7 @@ fn precondition_and_solve(input_filename: &str, sketch_filename: &str, seed: u64
     ffi::run_solve_lap(shared_jl_cols_flat, input_col_ptrs, input_row_indices, input_values, n)
 }
 
-fn write_csv(filename: &str, array: &Array2<f64>) -> Result<(), Box<dyn Error>> {
 
-    // Write the array into the file.
-    {
-        let file = File::create(filename)?;
-        let mut writer = WriterBuilder::new().has_headers(false).from_writer(file);
-        writer.serialize_array2(&array)?;
-    }
-
-    // Read an array back from the file
-    let file = File::open("data/test.csv")?;
-    let mut reader = ReaderBuilder::new().has_headers(false).from_reader(file);
-    let array_read: Array2<f64> = reader.deserialize_array2((2, 3))?;
-
-    // Ensure that we got the original array back
-    assert_eq!(array_read, array);
-    Ok(())
-}
 
 fn main() {
 

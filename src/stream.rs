@@ -1,0 +1,53 @@
+use sprs::{CsMat,CsMatI,TriMatI};
+use crate::{read_mtx,Sparsifier};
+
+
+pub struct InputStream {
+    pub input_matrix: CsMatI<f64, i32>,
+//    pub input_iterator: 
+    pub num_nodes: usize,
+//    pub num_edges: usize,
+}
+
+impl InputStream {
+    // deal with diagonals?
+    // if the graph is symmetric, de-symmetrize it ideally
+    // how does the mtx reader handle symmetry?
+    pub fn new(filename: &str, add_node: bool) -> InputStream {
+        let mut input = read_mtx(filename, add_node);
+        // zeroed diagonal entries remain explicitly represented using this format.
+        // fix this later.
+        let num_nodes = input.outer_dims();
+        assert_eq!(input.outer_dims(), input.inner_dims());
+        for result in input.diag_iter_mut() {
+            match result {
+                Some(x) => *x = 0.0,
+                None => println!("problem iterating over diagonal"),
+            }
+        }
+        // for value in input.iter() {
+        //     println!("{:?}", value);
+        // }
+        InputStream{
+            input_matrix: input,
+            num_nodes: num_nodes,
+        }
+    }
+
+    pub fn run_stream(&self, epsilon: f64, beta_constant: i32, row_constant: i32, verbose: bool) {
+        let mut sparsifier = Sparsifier::new(self.num_nodes.try_into().unwrap(), epsilon, beta_constant, row_constant, verbose);
+
+        for (value, (row, col)) in self.input_matrix.iter() {
+            sparsifier.insert(row.try_into().unwrap(), col.try_into().unwrap(), *value);
+        }
+
+        sparsifier.new_entries.display();
+        //s.sparse_display();
+        sparsifier.sparsify();
+        //s.new_entries.display();
+        sparsifier.sparse_display();
+
+        sparsifier.check_diagonal();
+
+    }
+}

@@ -4,7 +4,15 @@
 use sprs::{CsMat,CsMatI,TriMatI};
 use sprs::io::{read_matrix_market, write_matrix_market};
 
+use ndarray::{array, Array2};
+use ndarray_csv::{Array2Reader, Array2Writer};
+use std::error::Error;
+use csv::{ReaderBuilder, WriterBuilder};
+use std::fs::File;
+use std::io::{self, prelude::*, BufReader};
+
 use crate::sparsifier::{Sparsifier,Triplet};
+use crate::ffi;
 
 pub fn read_mtx(filename: &str, add_node: bool) -> CsMatI<f64, i32>{
     let trip = read_matrix_market::<f64, i32, &str>(filename).unwrap();
@@ -41,54 +49,54 @@ pub fn write_mtx(filename: &str, matrix: &CsMat<f64>) {
     sprs::io::write_matrix_market(filename, matrix).ok();
 }
 
-pub struct InputStream {
-    pub input_matrix: CsMatI<f64, i32>,
-//    pub input_iterator: 
-    pub num_nodes: usize,
-//    pub num_edges: usize,
+// reads a jl_sketch vec of vecs from a file and 
+pub fn read_vecs_from_file_flat(filename: &str) -> ffi::FlattenedVec {
+    let file = File::open(filename).unwrap();
+    let reader = BufReader::new(file);
+
+    let mut jl_vec: Vec<f64> = vec![];
+    let mut line_length: usize = 0; 
+    let mut first: bool = true;
+    let mut line_counter: usize = 0;
+
+    for line in reader.lines() {
+        line_counter += 1;
+        let mut col: Vec<f64> = line.expect("uh oh").split(",")
+                                        .map(|x| x.trim().parse::<f64>().unwrap())
+                                        //.map(|v| ffi::Shared { v })
+                                        .collect();
+        if first {
+            line_length = col.len().try_into().unwrap();
+        }
+        let current_line_length= col.len().try_into().unwrap();
+        assert_eq!(line_length, current_line_length);
+        jl_vec.append(&mut col);
+    }
+    //println!("line length = {}, num_lines = {}", line_length, line_counter);
+
+    let mut jl_cols_flat = ffi::FlattenedVec{vec: jl_vec, num_cols: line_counter, num_rows: line_length};
+    jl_cols_flat
 }
 
-impl InputStream {
-    // deal with diagonals?
-    // if the graph is symmetric, de-symmetrize it ideally
-    // how does the mtx reader handle symmetry?
-    pub fn new(filename: &str, add_node: bool) -> InputStream {
-        let mut input = read_mtx(filename, add_node);
-        // zeroed diagonal entries remain explicitly represented using this format.
-        // fix this later.
-        let num_nodes = input.outer_dims();
-        assert_eq!(input.outer_dims(), input.inner_dims());
-        for result in input.diag_iter_mut() {
-            match result {
-                Some(x) => *x = 0.0,
-                None => println!("problem iterating over diagonal"),
-            }
-        }
-        // for value in input.iter() {
-        //     println!("{:?}", value);
-        // }
-        InputStream{
-            input_matrix: input,
-            num_nodes: num_nodes,
-        }
+pub fn write_csv(filename: &str, array: &Array2<f64>) -> Result<(), Box<dyn Error>> {
+
+    // Write the array into the file.
+    {
+        let file = File::create(filename)?;
+        let mut writer = WriterBuilder::new().has_headers(false).from_writer(file);
+        writer.serialize_array2(&array)?;
     }
 
-    pub fn run_stream(&self, epsilon: f64, beta_constant: i32, row_constant: i32, verbose: bool) {
-        let mut sparsifier = Sparsifier::new(self.num_nodes.try_into().unwrap(), epsilon, beta_constant, row_constant, verbose);
+    // Read an array back from the file
+    let file = File::open("data/test.csv")?;
+    let mut reader = ReaderBuilder::new().has_headers(false).from_reader(file);
+    let array_read: Array2<f64> = reader.deserialize_array2((2, 3))?;
 
-        for (value, (row, col)) in self.input_matrix.iter() {
-            sparsifier.insert(row.try_into().unwrap(), col.try_into().unwrap(), *value);
-        }
-
-        sparsifier.new_entries.display();
-        //s.sparse_display();
-        sparsifier.sparsify();
-        //s.new_entries.display();
-        sparsifier.sparse_display();
-
-        sparsifier.check_diagonal();
-
-    }
+    // Ensure that we got the original array back
+    assert_eq!(array_read, array);
+    Ok(())
 }
+
+
 
 //pub fn 
