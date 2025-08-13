@@ -3,6 +3,9 @@ use std::ops::Add;
 use rand::Rng;
 use approx::AbsDiffEq;
 
+use crate::utils::make_fake_jl_col;
+use crate::ffi;
+
 // template types later
 #[derive(Clone)]
 pub struct Triplet{
@@ -198,8 +201,18 @@ impl Sparsifier {
         self.current_laplacian = self.current_laplacian.add(&new_stuff);
         println!("checking diagonal after populating laplacian");
         self.check_diagonal();
-        let diag = self.current_laplacian.diag();
 
+        // ------ TRYING A SOLVE STEP HERE TO DEBUG --
+        println!("is the matrix symmetric? {}", sprs::is_symmetric(&self.current_laplacian));
+        let jl_sketch_col = make_fake_jl_col(self.num_nodes as usize);
+        let col_ptrs: Vec<i32> = self.current_laplacian.indptr().as_slice().unwrap().to_vec();
+        let row_indices: Vec<i32> = self.current_laplacian.indices().to_vec();
+        let values: Vec<f64> = self.current_laplacian.data().to_vec();
+        println!("jl sketch col has {} entries. lap has {} cols and {} nzs", jl_sketch_col.vec.len(), col_ptrs.len()-1, row_indices.len());
+        let dummy = ffi::run_solve_lap(jl_sketch_col, col_ptrs, row_indices, values, self.num_nodes);
+        // ------ END DEBUGGING SOLVE STEP -----------
+
+        let diag = self.current_laplacian.diag();
         let diag_nnz = diag.nnz();
         let num_nnz = (self.current_laplacian.nnz() - diag_nnz) / 2;
         // janky check for integer rounding. i hang my head in shame

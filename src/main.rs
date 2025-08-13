@@ -161,7 +161,6 @@ fn lap_test() {
 }
 
 fn main() {
-    let num_values = 10;
-    println!("{:?}", make_fake_jl_col(num_values).vec);
-    //lap_test();
+    lap_test();
+    //solve_test();
 }
