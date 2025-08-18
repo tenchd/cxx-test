@@ -2,7 +2,7 @@
 use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
 use cxx::Vector;
-use sprs::{CsMat};
+use sprs::{CsMat,CsVecI};
 extern crate fasthash;
 extern crate csv;
 extern crate ndarray;
@@ -14,7 +14,7 @@ mod jl_sketch;
 mod sparsifier;
 mod stream;
 
-use utils::{read_mtx, write_mtx, write_csv, read_vecs_from_file_flat, make_fake_jl_col};
+use utils::{read_mtx, write_mtx, write_csv, read_vecs_from_file_flat, make_fake_jl_col,create_trivial_rhs};
 use jl_sketch::{jl_sketch_sparse,jl_sketch_sparse_blocked};
 use sparsifier::{Sparsifier,Triplet};
 use stream::InputStream;
@@ -154,7 +154,7 @@ fn lap_test() {
     let verbose = false;
 
     let input_filename = "/global/u1/d/dtench/m1982/david/bulk_to_process/virus/virus.mtx";
-    let add_node = true;
+    let add_node = false;
 
     let stream = InputStream::new(input_filename, add_node);
     stream.run_stream(epsilon, beta_constant, row_constant, verbose);
@@ -163,4 +163,6 @@ fn lap_test() {
 fn main() {
     lap_test();
     //solve_test();
+
+    //println!("{:?}", create_trivial_rhs(10));
 }

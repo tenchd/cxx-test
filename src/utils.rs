@@ -1,7 +1,7 @@
 // this file stores boring functions for the Rust side of the sparsifier implementation. 
 // boring means not related to ffi, not really part of the core sparsifier logic, etc.
 
-use sprs::{CsMat,CsMatI,TriMatI};
+use sprs::{CsMat,CsMatI,TriMatI,CsVec,CsVecI};
 use sprs::io::{read_matrix_market, write_matrix_market};
 
 use ndarray::{array, Array2};
@@ -29,10 +29,13 @@ pub fn read_mtx(filename: &str, add_node: bool) -> CsMatI<f64, i32>{
         let mut trip_fixed = TriMatI::<f64, i32>::new((num_nodes+1, num_nodes+1));
         for triplet in trip.triplet_iter() {
             let (val, (row, col)) = triplet;
+            //assert!(row > col, "upper triangular entry row {} col {}", row, col);
             trip_fixed.add_triplet(row as usize, col as usize, *val);
         }
 
         let col_format = trip_fixed.to_csc::<i32>();
+        println!("is the virus dataset symmetric? {}", sprs::is_symmetric(&col_format));
+        println!("virus dataset has {} nonzeros", col_format.nnz());
         return col_format;
     }
     else {
@@ -123,11 +126,41 @@ pub fn make_fake_jl_col(num_values: usize) -> ffi::FlattenedVec{
     //fake_jl_col.get_mut(num_values-1) += -1.0 * sum;
     let sum: f64 = fake_jl_col.iter().sum();
     assert!(sum.abs_diff_eq(&0.0, 1e-10), "fake jl sketch vector sum is nonzero: {}", sum);
-    let output = ffi::FlattenedVec{vec: fake_jl_col, num_cols: num_values, num_rows: 1 };
+    let output = ffi::FlattenedVec{vec: fake_jl_col, num_cols: 1, num_rows: num_values};
     return output;
 
 }
 
+//laplacian: &CsMatI<f64, i32>
+pub fn create_trivial_rhs(num_values: usize, matrix: &CsMatI<f64,i32>) -> ffi::FlattenedVec {
 
+    println!("hi");
+    let indices: Vec<i32> = (0..num_values as i32).collect();
+    let mut values: Vec<f64> = vec![0.0; num_values];
+    let mut rng = rand::thread_rng();
+    let uniform = Uniform::new(-1.0, 1.0);
+    // add random values for each entry except the last.
+    for i in 0..num_values {
+        if i%50000 == 0 {
+            println!("{}",i);
+        }
+        let value = uniform.sample(&mut rng);
+        if let Some(position) = values.get_mut(i) {
+            *position += value;
+        }
+        //fake_jl_col.get_mut(i) += value;
+    }
+    println!("done");
+
+    let trivial_solution = CsVecI::<f64, i32>::new(num_values, indices, values);
+    println!("vec build done");
+    let temp_trivial_rhs = (matrix * &trivial_solution);
+    println!("mult done");
+    let trivial_rhs = temp_trivial_rhs.to_dense().to_vec();
+    println!("conversion done");
+    ffi::FlattenedVec{vec: trivial_rhs, num_cols: 1, num_rows: num_values}
+}
 
 //pub fn 
+
+

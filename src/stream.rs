@@ -45,11 +45,15 @@ impl InputStream {
             sparsifier.insert(row.try_into().unwrap(), col.try_into().unwrap(), *value);
         }
 
-        //sparsifier.new_entries.display();
-        //s.sparse_display();
-        sparsifier.sparsify();
-        //s.new_entries.display();
-        //sparsifier.sparse_display();
+        // to check equivalence with original matrix, call sparsify with argument true and uncomment the check loop below
+        sparsifier.sparsify(false);
+
+        // for (value, (row, col)) in self.input_matrix.iter() {
+        //     let check_value = sparsifier.current_laplacian.get(row as usize, col as usize).unwrap();
+        //     if (row != col){
+        //         assert!(*value == *check_value * -1.0, "not matching values row {} col {} original value {} lap value {}", row, col, *value, *check_value);
+        //     }
+        // }
 
 
         println!("checking diagonal final time");

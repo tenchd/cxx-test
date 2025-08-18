@@ -3,7 +3,7 @@ use std::ops::Add;
 use rand::Rng;
 use approx::AbsDiffEq;
 
-use crate::utils::make_fake_jl_col;
+use crate::utils::{create_trivial_rhs, make_fake_jl_col};
 use crate::ffi;
 
 // template types later
@@ -168,7 +168,7 @@ impl Sparsifier {
         assert!(v2 < self.num_nodes);
 
         // ignore diagonal entries, upper triangular entries, and entries with 0 value
-        if (v1 < v2 && value != 0.0){
+        if (v1 > v2 && value != 0.0){
             self.new_entries.insert(v1, v2, value);
             //println!("inserting ({}, {}) with value {}", v1, v2, value);
         }
@@ -188,7 +188,7 @@ impl Sparsifier {
         coins
     }
 
-    pub fn sparsify(&mut self) {
+    pub fn sparsify(&mut self, end_early: bool) {
         // this is dummy sparsifier code until i integrate it with the c++ code
         // apply diagonals to new triplet entries
         self.new_entries.process_diagonal();
@@ -199,17 +199,26 @@ impl Sparsifier {
         self.new_entries.delete_state();
         // add the new entries to the laplacian
         self.current_laplacian = self.current_laplacian.add(&new_stuff);
-        println!("checking diagonal after populating laplacian");
+        println!("checking diagonal after populating laplacian:");
         self.check_diagonal();
+
+        if end_early {
+            return;
+        }
 
         // ------ TRYING A SOLVE STEP HERE TO DEBUG --
         println!("is the matrix symmetric? {}", sprs::is_symmetric(&self.current_laplacian));
-        let jl_sketch_col = make_fake_jl_col(self.num_nodes as usize);
+
+        //create a trivial solution via forward multiplication. for testing purposes, will remove later
+        let trivial_right_hand_side = create_trivial_rhs(self.num_nodes as usize, &self.current_laplacian);
+
+        println!("double done");
         let col_ptrs: Vec<i32> = self.current_laplacian.indptr().as_slice().unwrap().to_vec();
         let row_indices: Vec<i32> = self.current_laplacian.indices().to_vec();
         let values: Vec<f64> = self.current_laplacian.data().to_vec();
-        println!("jl sketch col has {} entries. lap has {} cols and {} nzs", jl_sketch_col.vec.len(), col_ptrs.len()-1, row_indices.len());
-        let dummy = ffi::run_solve_lap(jl_sketch_col, col_ptrs, row_indices, values, self.num_nodes);
+        println!("jl sketch col has {} entries. lap has {} cols and {} nzs", trivial_right_hand_side.vec.len(), col_ptrs.len()-1, row_indices.len());
+        println!("there are {} nonzeros in the last column", col_ptrs[self.num_nodes as usize] - col_ptrs[(self.num_nodes-1) as usize]);
+        let dummy = ffi::run_solve_lap(trivial_right_hand_side, col_ptrs, row_indices, values, self.num_nodes);
         // ------ END DEBUGGING SOLVE STEP -----------
 
         let diag = self.current_laplacian.diag();
@@ -255,6 +264,6 @@ impl Sparsifier {
             // check each column is sum 0. floating point error means you'll be a little off
             assert!(sum.abs_diff_eq(&0.0, 1e-10), "column where we messed up: {}. column sum: {}.", col_index, sum);
         }
-        println!("all good");
+        println!("each column sums to 0. diagonal check passed.");
     }
 }
