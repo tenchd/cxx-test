@@ -1,4 +1,5 @@
 #![allow(unused)]
+#![feature(test)]
 use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
 use cxx::Vector;
@@ -8,6 +9,7 @@ extern crate csv;
 extern crate ndarray;
 extern crate ndarray_csv;
 extern crate rand;
+extern crate test;
 
 mod utils;
 mod jl_sketch;

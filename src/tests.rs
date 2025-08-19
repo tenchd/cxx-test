@@ -2,11 +2,13 @@ use sprs::{CsMat,CsMatI,TriMat,TriMatI,CsVec,CsVecI};
 use rand::Rng;
 use rand::distributions::{Distribution, Uniform};
 
+
+
 pub fn add(left: u64, right: u64) -> u64 {
     left + right
 }
 
-pub fn make_random_matrix(num_rows: usize, nnz: usize) -> CsMat<f64> {
+pub fn make_random_matrix(num_rows: usize, nnz: usize, csc: bool) -> CsMat<f64> {
     let mut trip: TriMat<f64> = TriMat::new((num_rows, num_rows));
     let mut rng = rand::thread_rng();
     let uniform = Uniform::new(-1.0, 1.0);
@@ -16,7 +18,10 @@ pub fn make_random_matrix(num_rows: usize, nnz: usize) -> CsMat<f64> {
         let value = uniform.sample(&mut rng);
         trip.add_triplet(row_pos, col_pos, value);
     }
-    trip.to_csc()
+    if csc {
+        return trip.to_csc();
+    }
+    trip.to_csr()
 }
 
 pub fn make_random_vec(num_values: usize) -> CsVec<f64> {
@@ -42,17 +47,59 @@ pub fn make_random_vec(num_values: usize) -> CsVec<f64> {
     rand_vec
 }
 
+pub fn spmv_basic(num_rows: usize, nnz: usize, csc: bool) {
+    //let num_rows = 10;
+    //let nnz = 20;
+    let mat = make_random_matrix(num_rows, nnz, csc);
+    let vector = make_random_vec(num_rows);
+    let result = &mat * &vector;
+    assert!(result.nnz()>0);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
-    #[test]
-    fn spmv_basic() {
-        let num_rows = 10;
-        let nnz = 20;
-        let mat = make_random_matrix(num_rows, nnz);
-        let vector = make_random_vec(num_rows);
-        let result = &mat * &vector;
-        assert!(result.nnz()>0);
+    #[bench]
+    fn spmv1c(b: &mut Bencher){
+        b.iter(|| spmv_basic(10,20, true));
+    }       
+    
+    #[bench]
+    fn spmv1r(b: &mut Bencher){
+        b.iter(|| spmv_basic(10,20, false));
     }
+    
+    #[bench]
+    fn spmv2c(b: &mut Bencher){
+        b.iter(|| spmv_basic(100,2000, true));
+    }
+
+    #[bench]
+    fn spmv2r(b: &mut Bencher){
+        b.iter(|| spmv_basic(100,2000, false));
+    }
+
+    #[bench]
+    fn spmv3c(b: &mut Bencher){
+        b.iter(|| spmv_basic(1000,200000, true));
+    }
+
+    #[bench]
+    fn spmv3r(b: &mut Bencher){
+        b.iter(|| spmv_basic(1000,200000, false));
+    }
+
+    #[bench]
+    fn spmv4c(b: &mut Bencher){
+        b.iter(|| spmv_basic(10000,2000000, true));
+    }
+
+    #[bench]
+    fn spmv4r(b: &mut Bencher){
+        b.iter(|| spmv_basic(10000,2000000, false));
+    }
+
+
 }
