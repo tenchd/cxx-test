@@ -154,7 +154,7 @@ pub fn create_trivial_rhs(num_values: usize, matrix: &CsMatI<f64,i32>) -> ffi::F
 
     let trivial_solution = CsVecI::<f64, i32>::new(num_values, indices, values);
     println!("vec build done");
-    let temp_trivial_rhs = (matrix * &trivial_solution);
+    let temp_trivial_rhs = matrix * &trivial_solution;
     println!("mult done");
     let trivial_rhs = temp_trivial_rhs.to_dense().to_vec();
     println!("conversion done");

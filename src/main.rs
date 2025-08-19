@@ -13,12 +13,14 @@ mod utils;
 mod jl_sketch;
 mod sparsifier;
 mod stream;
+mod tests;
 
 use utils::{read_mtx, write_mtx, write_csv, read_vecs_from_file_flat, make_fake_jl_col,create_trivial_rhs};
 use jl_sketch::{jl_sketch_sparse,jl_sketch_sparse_blocked};
 use sparsifier::{Sparsifier,Triplet};
 use stream::InputStream;
 use crate::ffi::FlattenedVec;
+
 
 #[cxx::bridge]
 mod ffi {
