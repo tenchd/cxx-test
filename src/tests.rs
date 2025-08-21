@@ -103,12 +103,12 @@ mod tests {
 
     #[bench]
     fn spmv4c(b: &mut Bencher){
-        spmv_basic(10000,2000000,true, b);
+        spmv_basic(200000,4000000,true, b);
     }
 
     #[bench]
     fn spmv4r(b: &mut Bencher){
-        spmv_basic(10000,2000000,false, b);
+        spmv_basic(200000,4000000,false, b);
     }
 
 
