@@ -47,58 +47,60 @@ pub fn make_random_vec(num_values: usize) -> CsVec<f64> {
     rand_vec
 }
 
-pub fn spmv_basic(num_rows: usize, nnz: usize, csc: bool) {
-    //let num_rows = 10;
-    //let nnz = 20;
-    let mat = make_random_matrix(num_rows, nnz, csc);
-    let vector = make_random_vec(num_rows);
-    let result = &mat * &vector;
-    assert!(result.nnz()>0);
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use test::Bencher;
 
+    //For benchmarking how long a sparse matrix x dense vector multiplication takes.
+    pub fn spmv_basic(num_rows: usize, nnz: usize, csc: bool, b: &mut Bencher) {
+        let mat = make_random_matrix(num_rows, nnz, csc);
+        let vector = make_random_vec(num_rows);
+        //let result = &mat * &vector;
+        b.iter(|| &mat * &vector);
+        //assert!(result.nnz()>0);
+    }
+
+    //benchmark a small multiplication when the matrix is in csc form
     #[bench]
     fn spmv1c(b: &mut Bencher){
-        b.iter(|| spmv_basic(10,20, true));
+        spmv_basic(10,20,true, b);
     }       
-    
+
+    //benchmark a small multiplication when the matrix is in csr form
     #[bench]
     fn spmv1r(b: &mut Bencher){
-        b.iter(|| spmv_basic(10,20, false));
+        spmv_basic(10,20,false, b);
     }
     
     #[bench]
     fn spmv2c(b: &mut Bencher){
-        b.iter(|| spmv_basic(100,2000, true));
+        spmv_basic(100,2000,true, b);
     }
 
     #[bench]
     fn spmv2r(b: &mut Bencher){
-        b.iter(|| spmv_basic(100,2000, false));
+        spmv_basic(100,2000,false, b);
     }
 
     #[bench]
     fn spmv3c(b: &mut Bencher){
-        b.iter(|| spmv_basic(1000,200000, true));
+        spmv_basic(1000,200000,true, b);
     }
 
     #[bench]
     fn spmv3r(b: &mut Bencher){
-        b.iter(|| spmv_basic(1000,200000, false));
+        spmv_basic(1000,200000,false, b);
     }
 
     #[bench]
     fn spmv4c(b: &mut Bencher){
-        b.iter(|| spmv_basic(10000,2000000, true));
+        spmv_basic(10000,2000000,true, b);
     }
 
     #[bench]
     fn spmv4r(b: &mut Bencher){
-        b.iter(|| spmv_basic(10000,2000000, false));
+        spmv_basic(10000,2000000,false, b);
     }
 
 

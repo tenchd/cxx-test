@@ -134,28 +134,28 @@ pub fn make_fake_jl_col(num_values: usize) -> ffi::FlattenedVec{
 //laplacian: &CsMatI<f64, i32>
 pub fn create_trivial_rhs(num_values: usize, matrix: &CsMatI<f64,i32>) -> ffi::FlattenedVec {
 
-    println!("hi");
+    println!("Creating trivial rhs:");
     let indices: Vec<i32> = (0..num_values as i32).collect();
     let mut values: Vec<f64> = vec![0.0; num_values];
     let mut rng = rand::thread_rng();
     let uniform = Uniform::new(-1.0, 1.0);
     // add random values for each entry except the last.
     for i in 0..num_values {
-        if i%50000 == 0 {
-            println!("{}",i);
-        }
+        // if i%50000 == 0 {
+        //     println!("{}",i);
+        // }
         let value = uniform.sample(&mut rng);
         if let Some(position) = values.get_mut(i) {
             *position += value;
         }
         //fake_jl_col.get_mut(i) += value;
     }
-    println!("done");
+    println!("done creating trivial solution entries");
 
     let trivial_solution = CsVecI::<f64, i32>::new(num_values, indices, values);
-    println!("vec build done");
+    println!("trivial solution CsVec build done");
     let temp_trivial_rhs = matrix * &trivial_solution;
-    println!("mult done");
+    println!("multiplication done");
     let trivial_rhs = temp_trivial_rhs.to_dense().to_vec();
     println!("conversion done");
     ffi::FlattenedVec{vec: trivial_rhs, num_cols: 1, num_rows: num_values}

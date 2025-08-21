@@ -210,9 +210,10 @@ impl Sparsifier {
         println!("is the matrix symmetric? {}", sprs::is_symmetric(&self.current_laplacian));
 
         //create a trivial solution via forward multiplication. for testing purposes, will remove later
+        //NOTE: currently this call takes a LONG time. like 10-20 minutes. DIAGNOSE
         let trivial_right_hand_side = create_trivial_rhs(self.num_nodes as usize, &self.current_laplacian);
 
-        println!("double done");
+        println!("done generating trivial rhs");
         let col_ptrs: Vec<i32> = self.current_laplacian.indptr().as_slice().unwrap().to_vec();
         let row_indices: Vec<i32> = self.current_laplacian.indices().to_vec();
         let values: Vec<f64> = self.current_laplacian.data().to_vec();
