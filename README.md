@@ -11,7 +11,10 @@ In src/main, the main() function currently calls `lap_test()` which reads the vi
 
 Change the `input_filename` variable to the path to the virus dataset. (It may work even without this change, I can't remember the rules about file permissions on NERSC. I'll check this later)
 
-Run `cargo +nightly run` to run the code. You should see output that indicates the matrix is read from the file, run through the streaming code and collected into a Laplacian matrix. Then the code will attempt to create a trivial rhs vector, and the step where the Laplacian (with about 4.5 million nonzeros) is multiplied by the random solution vetor takes a long time: 10-20 minutes.
+Run `cargo +nightly run` to run the code. 
+
+## The SPMV Performance Issue
+You should see output that indicates the matrix is read from the file, run through the streaming code and collected into a Laplacian matrix. Then the code will attempt to create a trivial rhs vector, and the step where the Laplacian (with about 4.5 million nonzeros) is multiplied by the random solution vetor takes a long time: 10-20 minutes.
 
 The code that performs this mysteriously-slow multiplication is the function `create_trivial_rhs` in src/utils.rs.
 
