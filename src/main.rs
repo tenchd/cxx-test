@@ -145,7 +145,7 @@ fn solve_test() {
 
 }
 
-fn lap_test() {
+fn lap_test(input_filename: &str) {
     let seed: u64 = 1;
     let jl_factor: f64 = 1.5;
     let block_rows: usize = 100;
@@ -157,7 +157,6 @@ fn lap_test() {
     let row_constant = 2;
     let verbose = false;
 
-    let input_filename = "/global/u1/d/dtench/m1982/david/bulk_to_process/virus/virus.mtx";
     let add_node = false;
 
     let stream = InputStream::new(input_filename, add_node);
@@ -165,7 +164,8 @@ fn lap_test() {
 }
 
 fn main() {
-    lap_test();
+    let input_filename = "/global/u1/d/dtench/m1982/david/bulk_to_process/virus/virus.mtx";
+    lap_test(input_filename);
     //solve_test();
 
     //println!("{:?}", create_trivial_rhs(10));

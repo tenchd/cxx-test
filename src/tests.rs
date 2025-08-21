@@ -54,6 +54,14 @@ mod tests {
 
     //For benchmarking how long a sparse matrix x dense vector multiplication takes.
     pub fn spmv_basic(num_rows: usize, nnz: usize, csc: bool, b: &mut Bencher) {
+        // let mut mat_type = "";
+        // if csc {
+        //     mat_type = "CSC";
+        // }
+        // else {
+        //     mat_type = "CSR";
+        // }
+        // println!("Testing SPMV time for a {} x {} matrix in {} form with {} nonzeros", num_rows, num_rows, mat_type, nnz);
         let mat = make_random_matrix(num_rows, nnz, csc);
         let vector = make_random_vec(num_rows);
         //let result = &mat * &vector;
