@@ -3,6 +3,7 @@ use std::ops::Add;
 use rand::Rng;
 use approx::AbsDiffEq;
 
+use crate::jl_sketch::jl_sketch_sparse;
 use crate::utils::{create_trivial_rhs, make_fake_jl_col};
 use crate::ffi;
 
@@ -77,6 +78,29 @@ impl Triplet {
         csc_form
     }
 
+
+    // converts triplet into signed edge-vertex incidence matrix to be JL sketched
+    pub fn to_edge_vertex_incidence_matrix(&self) -> CsMatI<f64, i32> {
+        //we grab every other entry in the triplet vectors because each edge (i,j) is inserted as (i,j) and then also immediately as (j,i)
+        let mut evim_triplets = Triplet::new(self.num_nodes);
+        assert!(self.col_indices.len()%2 == 0);
+        let end: usize = self.col_indices.len()/2;
+        for i in 0..end {
+            let index = 2*i as usize;
+            evim_triplets.col_indices.push(i.try_into().unwrap());
+            evim_triplets.row_indices.push(self.col_indices[index]);
+            evim_triplets.values.push(-1.0 * self.values[index]);
+
+
+            evim_triplets.col_indices.push(i.try_into().unwrap());
+            evim_triplets.row_indices.push(self.row_indices[index]);
+            evim_triplets.values.push(self.values[index]);
+        }
+        let evim_trip_form: TriMatBase<Vec<i32>, Vec<f64>>  = TriMatI::<f64, i32>::from_triplets((evim_triplets.num_nodes as usize, evim_triplets.col_indices.len() as usize), evim_triplets.row_indices, evim_triplets.col_indices, evim_triplets.values);
+        let evim_csc_form: CsMatBase<f64, i32, Vec<i32>, Vec<i32>, Vec<f64>, _> = evim_trip_form.to_csc();
+        evim_csc_form
+    }
+
     pub fn delete_state(&mut self) {
 
         self.col_indices = vec![];
@@ -118,10 +142,12 @@ pub struct Sparsifier{
     pub row_constant: i32,    // set to be 20 in line 3(b) of alg pseudocode, probably can be far smaller
     pub beta: i32,     // parameter defined in line 1 of alg pseudocode
     pub verbose: bool,    //when true, prints a bunch of debugging info
+    pub jl_factor: f64, //constant factor for jl sketch matrix
+    pub seed: u64,   //random seed for hashed jl sketch matrix
 }
 
 impl Sparsifier {
-    pub fn new(num_nodes: i32, epsilon: f64, beta_constant: i32, row_constant: i32, verbose: bool) -> Sparsifier {
+    pub fn new(num_nodes: i32, epsilon: f64, beta_constant: i32, row_constant: i32, verbose: bool, jl_factor: f64, seed: u64) -> Sparsifier {
         // as per line 1
         let beta = (epsilon.powf(-2.0) * (beta_constant as f64) * (num_nodes as f64).log(2.0)).round() as i32;
         // as per 3(b) condition
@@ -145,6 +171,8 @@ impl Sparsifier {
             row_constant: row_constant,
             beta: beta,
             verbose: verbose,
+            jl_factor: jl_factor,
+            seed: seed,
         }
     }
 
@@ -191,6 +219,20 @@ impl Sparsifier {
     pub fn sparsify(&mut self, end_early: bool) {
         // this is dummy sparsifier code until i integrate it with the c++ code
         // apply diagonals to new triplet entries
+        let evim = &self.new_entries.to_edge_vertex_incidence_matrix();
+        let sketch_cols = jl_sketch_sparse(&evim, self.jl_factor, self.seed);
+
+        println!("evim:");
+        for (value, (row, col)) in evim.iter() {
+            println!("{},{} has value {}", row, col, value);
+        }
+        // let sketch_cols = jl_sketch_sparse(&self.new_entries.to_edge_vertex_incidence_matrix(), self.jl_factor, self.seed);
+
+        println!("sketch:");
+        // why am i getting 0 values in the output for the following?
+        for (value, (row, col)) in sketch_cols.iter(){
+            println!("{},{} has value {}", row, col, value);
+        }
         self.new_entries.process_diagonal();
         // get the new entries in csc format
         // improve this later; currently it clones the triplet object which uses extra memory
@@ -232,6 +274,8 @@ impl Sparsifier {
         let coins = Self::flip_coins(num_nnz);
         //encodes whether each edge survives sampling or not. True means it is sampled, False means it's not sampled
         let outcomes: Vec<bool> =  probs.clone().into_iter().zip(coins.into_iter()).map(|(p, c)| c < p).collect();
+
+        //TODO: add in edge reweighting step
 
         let mut counter = 0;
         for (value, (row, col)) in self.current_laplacian.iter() {

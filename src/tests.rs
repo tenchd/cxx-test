@@ -8,8 +8,8 @@ pub fn add(left: u64, right: u64) -> u64 {
     left + right
 }
 
-pub fn make_random_matrix(num_rows: usize, nnz: usize, csc: bool) -> CsMat<f64> {
-    let mut trip: TriMat<f64> = TriMat::new((num_rows, num_rows));
+pub fn make_random_matrix(num_rows: usize, num_cols: usize, nnz: usize, csc: bool) -> CsMat<f64> {
+    let mut trip: TriMat<f64> = TriMat::new((num_rows, num_cols));
     let mut rng = rand::thread_rng();
     let uniform = Uniform::new(-1.0, 1.0);
     for _ in 0..nnz {
@@ -62,12 +62,14 @@ mod tests {
         //     mat_type = "CSR";
         // }
         // println!("Testing SPMV time for a {} x {} matrix in {} form with {} nonzeros", num_rows, num_rows, mat_type, nnz);
-        let mat = make_random_matrix(num_rows, nnz, csc);
+        let mat = make_random_matrix(num_rows, num_rows, nnz, csc);
         let vector = make_random_vec(num_rows);
         //let result = &mat * &vector;
         b.iter(|| &mat * &vector);
         //assert!(result.nnz()>0);
     }
+
+    
 
     //benchmark a small multiplication when the matrix is in csc form
     #[bench]

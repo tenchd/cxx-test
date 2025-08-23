@@ -160,11 +160,12 @@ fn lap_test(input_filename: &str) {
     let add_node = false;
 
     let stream = InputStream::new(input_filename, add_node);
-    stream.run_stream(epsilon, beta_constant, row_constant, verbose);
+    stream.run_stream(epsilon, beta_constant, row_constant, verbose, jl_factor, seed);
 }
 
 fn main() {
-    let input_filename = "/global/u1/d/dtench/m1982/david/bulk_to_process/virus/virus.mtx";
+    //let input_filename = "/global/u1/d/dtench/m1982/david/bulk_to_process/virus/virus.mtx";
+    let input_filename = "/global/u1/d/dtench/rust_spars/cxx-test/data/cage3.mtx";
     lap_test(input_filename);
     //solve_test();
 

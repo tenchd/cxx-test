@@ -38,15 +38,15 @@ impl InputStream {
         }
     }
 
-    pub fn run_stream(&self, epsilon: f64, beta_constant: i32, row_constant: i32, verbose: bool) {
-        let mut sparsifier = Sparsifier::new(self.num_nodes.try_into().unwrap(), epsilon, beta_constant, row_constant, verbose);
+    pub fn run_stream(&self, epsilon: f64, beta_constant: i32, row_constant: i32, verbose: bool, jl_factor: f64, seed: u64) {
+        let mut sparsifier = Sparsifier::new(self.num_nodes.try_into().unwrap(), epsilon, beta_constant, row_constant, verbose, jl_factor, seed);
 
         for (value, (row, col)) in self.input_matrix.iter() {
             sparsifier.insert(row.try_into().unwrap(), col.try_into().unwrap(), *value);
         }
 
         // to check equivalence with original matrix, call sparsify with argument true and uncomment the check loop below
-        sparsifier.sparsify(false);
+        sparsifier.sparsify(true);
 
         // for (value, (row, col)) in self.input_matrix.iter() {
         //     let check_value = sparsifier.current_laplacian.get(row as usize, col as usize).unwrap();
