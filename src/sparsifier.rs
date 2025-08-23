@@ -3,7 +3,7 @@ use std::ops::Add;
 use rand::Rng;
 use approx::AbsDiffEq;
 
-use crate::jl_sketch::jl_sketch_sparse;
+use crate::jl_sketch::jl_sketch_sparse_flat;
 use crate::utils::{create_trivial_rhs, make_fake_jl_col};
 use crate::ffi;
 
@@ -220,19 +220,20 @@ impl Sparsifier {
         // this is dummy sparsifier code until i integrate it with the c++ code
         // apply diagonals to new triplet entries
         let evim = &self.new_entries.to_edge_vertex_incidence_matrix();
-        let sketch_cols = jl_sketch_sparse(&evim, self.jl_factor, self.seed);
+        println!("signed edge-vertex incidence matrix has {} rows and {} cols", evim.rows(), evim.cols());
+        let sketch_cols: ffi::FlattenedVec = jl_sketch_sparse_flat(&evim, self.jl_factor, self.seed);
 
-        println!("evim:");
-        for (value, (row, col)) in evim.iter() {
-            println!("{},{} has value {}", row, col, value);
-        }
+        // println!("evim:");
+        // for (value, (row, col)) in evim.iter() {
+        //     println!("{},{} has value {}", row, col, value);
+        // }
         // let sketch_cols = jl_sketch_sparse(&self.new_entries.to_edge_vertex_incidence_matrix(), self.jl_factor, self.seed);
 
-        println!("sketch:");
-        // why am i getting 0 values in the output for the following?
-        for (value, (row, col)) in sketch_cols.iter(){
-            println!("{},{} has value {}", row, col, value);
-        }
+        // println!("sketch:");
+        // // why am i getting 0 values in the output for the following?
+        // for (value, (row, col)) in sketch_cols.iter(){
+        //     println!("{},{} has value {}", row, col, value);
+        // }
         self.new_entries.process_diagonal();
         // get the new entries in csc format
         // improve this later; currently it clones the triplet object which uses extra memory
@@ -253,15 +254,17 @@ impl Sparsifier {
 
         //create a trivial solution via forward multiplication. for testing purposes, will remove later
         //NOTE: currently this call takes a LONG time. like 10-20 minutes. DIAGNOSE
-        let trivial_right_hand_side = create_trivial_rhs(self.num_nodes as usize, &self.current_laplacian);
+        //let trivial_right_hand_side = create_trivial_rhs(self.num_nodes as usize, &self.current_laplacian);
 
         println!("done generating trivial rhs");
         let col_ptrs: Vec<i32> = self.current_laplacian.indptr().as_slice().unwrap().to_vec();
         let row_indices: Vec<i32> = self.current_laplacian.indices().to_vec();
         let values: Vec<f64> = self.current_laplacian.data().to_vec();
-        println!("jl sketch col has {} entries. lap has {} cols and {} nzs", trivial_right_hand_side.vec.len(), col_ptrs.len()-1, row_indices.len());
+        println!("jl sketch col has {} entries. lap has {} cols and {} nzs", sketch_cols.vec.len(), col_ptrs.len()-1, row_indices.len());
         println!("there are {} nonzeros in the last column", col_ptrs[self.num_nodes as usize] - col_ptrs[(self.num_nodes-1) as usize]);
-        let dummy = ffi::run_solve_lap(trivial_right_hand_side, col_ptrs, row_indices, values, self.num_nodes);
+
+        //let dummy = ffi::run_solve_lap(trivial_right_hand_side, col_ptrs, row_indices, values, self.num_nodes);
+        let dummy = ffi::run_solve_lap(sketch_cols, col_ptrs, row_indices, values, self.num_nodes);
         // ------ END DEBUGGING SOLVE STEP -----------
 
         let diag = self.current_laplacian.diag();

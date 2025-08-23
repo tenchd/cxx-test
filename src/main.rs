@@ -50,7 +50,7 @@ mod ffi {
 
 impl FlattenedVec {
     //construct from Array2 type
-    pub fn new(&input_array: &Array2<f64>) -> ffi::FlattenedVec {
+    pub fn new(input_array: &Array2<f64>) -> ffi::FlattenedVec {
         let (num_rows, num_cols) = input_array.dim();
         let mut output = ffi::FlattenedVec{vec: vec![], num_rows: num_rows, num_cols: num_cols};
 
@@ -58,6 +58,17 @@ impl FlattenedVec {
             output.vec.push(*i);
         }   
 
+        output
+    }
+
+    pub fn to_array2(&self) -> Array2<f64>{
+        let mut output = Array2::<f64>::zeros((self.num_rows, self.num_cols));
+        for i in 0..self.vec.len() {
+            let row: usize = ((i as f64)/(self.num_rows as f64)).floor() as usize;
+            let col: usize = i % self.num_cols;
+            let value: f64 = *self.vec.get(i).unwrap();
+            output[[row,col]] = value;
+        }
         output
     }
 }
