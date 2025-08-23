@@ -22,7 +22,7 @@ use jl_sketch::{jl_sketch_sparse,jl_sketch_sparse_blocked};
 use sparsifier::{Sparsifier,Triplet};
 use stream::InputStream;
 use crate::ffi::FlattenedVec;
-
+use ndarray::Array2;
 
 #[cxx::bridge]
 mod ffi {
@@ -48,7 +48,19 @@ mod ffi {
     }
 }
 
+impl FlattenedVec {
+    //construct from Array2 type
+    pub fn new(&input_array: &Array2<f64>) -> ffi::FlattenedVec {
+        let (num_rows, num_cols) = input_array.dim();
+        let mut output = ffi::FlattenedVec{vec: vec![], num_rows: num_rows, num_cols: num_cols};
 
+        for i in input_array.iter() {
+            output.vec.push(*i);
+        }   
+
+        output
+    }
+}
 
 fn jl_sketch_dataset(input_filename: &str, output_filename: &str, jl_factor: f64, seed: u64){
     //be careful about jl sketch dimensions now that i'm adding a row and col to the laplacian. check this later
